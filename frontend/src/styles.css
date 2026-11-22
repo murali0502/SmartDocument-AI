@@ -1,0 +1,71 @@
+:root {
+  font-family: Inter, "Segoe UI", system-ui, sans-serif;
+  color: #eff1f7;
+  background: #101219;
+  font-synthesis: none;
+  --muted: #a6adc1;
+  --border: #303748;
+  --ready: #91e4c3;
+  --issue: #ffd194;
+  --accent: #c6beff;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; min-width: 280px; }
+a { color: inherit; }
+button { font: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+.layout { width: min(calc(100% - 3rem), 68rem); margin-inline: auto; }
+.masthead { background: #131621; border-bottom: 1px solid #262b3a; }
+.masthead-inner { min-height: 4.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.brand { display: flex; align-items: center; gap: .8rem; }
+.brand strong { display: block; font-size: .98rem; letter-spacing: -.015em; }
+.brand div > span { display: block; color: var(--muted); font-size: .76rem; margin-top: .15rem; }
+.brand-mark { display: grid; grid-template-columns: repeat(2, .38rem); place-content: center; gap: .19rem; width: 2.4rem; height: 2.4rem; border-radius: .65rem; background: #29254b; color: #c6baff; }
+.brand-mark i { width: .38rem; height: .38rem; border-radius: .1rem; background: currentColor; }
+.brand-mark i:nth-child(2) { opacity: .55; }
+.brand-mark i:nth-child(3) { opacity: .75; }
+.text-link { text-decoration: none; color: var(--muted); font-size: .88rem; white-space: nowrap; }
+.text-link:hover { color: var(--accent); text-decoration: underline; }
+
+.main { padding-block: clamp(2rem, 7vw, 5rem); }
+.page-title { display: flex; justify-content: space-between; align-items: end; gap: 1.25rem; margin-bottom: 1.75rem; }
+h1 { margin: 0; font-size: clamp(2.25rem, 6.5vw, 3.5rem); line-height: 1.08; letter-spacing: -.055em; font-weight: 660; }
+.page-title p { margin: .75rem 0 0; color: var(--muted); }
+button { border: 1px solid #4a496b; background: #24223b; color: #e7e1ff; border-radius: .55rem; padding: .65rem 1rem; cursor: pointer; white-space: nowrap; min-height: 2.75rem; font-size: .9rem; }
+button:hover:not(:disabled) { background: #332e54; }
+button:disabled { cursor: progress; opacity: .75; }
+
+.status-panel { border: 1px solid var(--border); border-radius: .9rem; overflow: hidden; background: #171b26; }
+.status-summary { display: flex; align-items: flex-start; gap: .95rem; padding: 1.45rem 1.5rem; background: linear-gradient(115deg, #23223a, #1a1e2c 68%); }
+.status-dot { width: .66rem; height: .66rem; border-radius: 50%; margin: .48rem .3rem 0 .35rem; background: currentColor; box-shadow: 0 0 0 .27rem color-mix(in srgb, currentColor 15%, transparent); flex: none; }
+[data-state="ready"] { color: var(--ready); }
+[data-state="issue"] { color: var(--issue); }
+[data-state="pending"] { color: var(--accent); }
+.status-summary h2 { margin: 0; font-size: 1.2rem; letter-spacing: -.022em; }
+.status-summary p, .check-row p { color: var(--muted); margin: .3rem 0 0; line-height: 1.5; }
+.status-summary p { font-size: .92rem; }
+.check-list { list-style: none; padding: 0; margin: 0; }
+.check-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.2rem 1.5rem; border-top: 1px solid var(--border); }
+.check-label { display: flex; align-items: center; gap: .85rem; }
+.check-icon { display: grid; place-items: center; width: 2rem; height: 2rem; border: 1px solid color-mix(in srgb, currentColor 30%, transparent); background: color-mix(in srgb, currentColor 7%, transparent); border-radius: .5rem; flex: none; }
+.check-row strong { font-size: .95rem; }
+.check-row p, .check-result { font-size: .85rem; }
+.check-result { text-align: right; font-weight: 550; }
+.status-footer { border-top: 1px solid var(--border); padding: .95rem 1.5rem; font-size: .8rem; color: var(--muted); }
+.status-footer time { color: #d6d9e5; margin-inline-start: .35rem; }
+
+@media (max-width: 34rem) {
+  .layout { width: calc(100% - 2rem); }
+  .page-title { align-items: start; flex-direction: column; }
+  .page-title p { line-height: 1.5; }
+  .status-summary, .check-row, .status-footer { padding-inline: 1rem; }
+  .check-label { gap: .55rem; }
+  .check-row { gap: .55rem; }
+}
+
+@media (max-width: 22rem) {
+  .check-row { align-items: flex-start; flex-direction: column; }
+  .check-result { margin-inline-start: 2.55rem; }
+}

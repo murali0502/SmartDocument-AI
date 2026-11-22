@@ -1,0 +1,20 @@
+# Database and storage design
+
+The first migration implements User, Workspace and Membership. The remaining records describe the proposed logical schema.
+
+| Family | Records and key constraints |
+|---|---|
+| Access | User, Workspace, Membership, Session, AuditLog. Unique membership key on workspace/user and scoped role checks. |
+| Ingestion | Blob, Document, DocumentVersion, IngestionJob, AnalysisRun. Workspace-scoped digest uniqueness on Blob, unique revision per document, leased job with attempt and fencing token, one active run pointer per version. |
+| Structure | SourceUnit, DocumentElement, ElementSpan, Chunk, ChunkSpan, ExtractionWarning. Deterministic identity within a run, parent references and ordinal indexes. SourceUnit holds immutable raw extracted text, locator map and native/OCR layer. |
+| Semantics | Entity, Concept, ConceptMention, ConceptAlias, ConceptDefinition, ConceptRevision and ConceptChange. Mentions link to spans, labels to revisions and evolution to both source versions. Alias lookup can return multiple concept IDs. |
+| Graph | Relationship, RelationshipEvidence, Dependency projection, GraphSnapshot. Index both traversal directions by workspace/predicate and source run. Snapshot references a frozen set of published runs and reviewed concept revisions. Preserve multiple assertions on the same tuple. |
+| Retrieval | EmbeddingRecord, IndexManifest, QueryRecord, RetrievalRecord. Embeddings unique on scope, object and model/version. Index audit rows include timing, candidate ranks and scope/run identity. |
+| Answers | AnswerRecord, Claim, EvidenceRecord, Citation and ClaimEvidence. Persist validation decisions and exact anchors. |
+| Operations | ModelConfiguration, EvaluationRun, immutable settings revisions and terminal job metrics. Store secrets by reference outside audit payloads. |
+
+Workspace-scoped opaque identifiers and composite foreign keys prevent accidental cross-workspace joins. Anchor records bind source unit, extraction run and document version. Native PDF locators retain page and geometry where available. DOCX uses structural paths. Slides use slide and shape. Workbook data uses sheet/row/cell identities. OCR stores word text, box and confidence independently. Native and OCR coordinates carry units and origin. Normalization maps spans to immutable source text. A rendering layer handles browser UTF-16 conversion. Chunk fragments retain their own exact source spans and represent boundary overlap separately.
+
+Use SQLite with FTS5, WAL, foreign keys and short transactions. Maintain a workspace-partitioned sparse index to isolate document statistics. Persist normalized dense vectors in transactional rows and begin with authorized exact cosine search. NetworkX represents bounded, versioned graph views. Workers stage per-run records and publish indexes and data together. A filesystem move may precede database commit, so use atomic rename, idempotent cleanup and a reference-aware garbage collector. Deletion transactionally revokes access, removes live indexes and invalidates dependent answers and snapshots. Background reference-counted garbage collection removes physical bytes, subject to defined retention. A backup includes a SQLite consistent snapshot and its referenced blob manifest and verifies a restore.
+
+PostgreSQL is the proposed hosted relational migration target after write contention and deployment needs justify it. MySQL is viable when mandated, with separate work around search and compatibility. Benchmark FAISS exact/ANN, Chroma embedded and Qdrant filtered ANN against exact scan before adding infrastructure. Any external index is rebuildable from published generation records and must pass stale-hit, filtered recall and delete tests. Retain relational graph tables until bounded traversal evidence shows a dedicated graph store is warranted.

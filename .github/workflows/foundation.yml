@@ -1,0 +1,43 @@
+name: Foundation checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install Python and locked dependencies
+        working-directory: backend
+        run: uv sync --locked
+      - name: Check backend and migrations
+        working-directory: backend
+        run: |
+          uv run --frozen ruff check
+          uv run --frozen ruff format --check
+          uv run --frozen pytest
+      - name: Export the API schema
+        run: uv run --project backend --frozen python scripts/export_openapi.py
+      - name: Install, verify contracts, and build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run contracts
+          git diff --exit-code -- src/generated/api.ts
+          npm run build
+      - name: Verify browser, API, and database integration
+        working-directory: frontend
+        run: |
+          npx playwright install --with-deps chromium
+          npm run test:e2e
