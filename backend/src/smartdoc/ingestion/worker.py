@@ -53,19 +53,37 @@ class IngestionWorker:
         if sys.platform != "linux" or not executable:
             return None
         try:
-            probe = subprocess.run(
-                [executable, "--unshare-all", "--ro-bind", "/", "/", "--", "/bin/true"],
-                stdin=subprocess.DEVNULL,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                timeout=3,
-                check=False,
-            )
-        except (OSError, subprocess.TimeoutExpired):
-            return None
-        return executable if probe.returncode == 0 else None
+            with TemporaryDirectory() as source, TemporaryDirectory() as scratch:
+                sample = Path(source) / "probe.txt"
+                sample.write_bytes(b"SmartDoc parser readiness")
+                output = Path(scratch) / "result.json"
+                env = process_environment()
+                command = self.command(
+                    Claim("", "", sample, "txt"), output, env, sandbox=executable
+                )
+                probe = subprocess.run(
+                    command,
+                    env=env,
+                    cwd=scratch,
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=5,
+                    check=False,
+                )
+                if probe.returncode == 0:
+                    payload = json.loads(output.read_bytes())
+                    if payload["result"]["units"][0]["text"] == "SmartDoc parser readiness":
+                        return executable
+        except (OSError, ValueError, TypeError, KeyError, IndexError, subprocess.TimeoutExpired):
+            pass
+        logger.warning("ingestion_sandbox_unavailable")
+        return None
 
-    def command(self, claim: Claim, output: Path, env: dict[str, str]) -> list[str]:
+    @staticmethod
+    def command(
+        claim: Claim, output: Path, env: dict[str, str], *, sandbox: str | None
+    ) -> list[str]:
         args = [
             sys.executable,
             "-m",
@@ -74,10 +92,10 @@ class IngestionWorker:
             claim.format,
             str(output),
         ]
-        if not self.sandbox:
+        if sandbox is None:
             return args
         command = [
-            self.sandbox,
+            sandbox,
             "--unshare-all",
             "--die-with-parent",
             "--proc",
@@ -123,7 +141,7 @@ class IngestionWorker:
             env = process_environment()
             try:
                 with subprocess.Popen(
-                    self.command(claim, output, env),
+                    self.command(claim, output, env, sandbox=self.sandbox),
                     env=env,
                     cwd=directory,
                     start_new_session=os.name == "posix",

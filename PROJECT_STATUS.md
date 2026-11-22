@@ -44,7 +44,7 @@ Windows and browsers beyond Chromium remain unverified. The Phase 1 GitHub Actio
 - Added streamed local uploads, filename and signature validation, SHA-256, workspace-scoped deduplication and managed original storage.
 - Added revision `0002_document_ingestion` with document, job and extraction tables. Durable leases recover interrupted claims and fence stale writers. Successful job state and its extraction publish in one transaction.
 - Implemented PDF, DOCX, TXT, Markdown, HTML, CSV, XLSX, PPTX, JSON, YAML, PNG, JPEG and TIFF. Retained page, slide, table, block and spreadsheet locators where available. English Tesseract preserves text, confidence and boxes in a separate OCR layer.
-- Used a single background worker started by the API. Parsing runs in a bounded subprocess, with Bubblewrap on supported Linux hosts. The browser continues to provide system status. Uploads and extraction review use the local API in this phase.
+- Used a single background worker started by the API. Parsing runs in a bounded subprocess. A synthetic extraction verifies that Bubblewrap can start with the required filesystem mounts before the worker sends it a document. The browser continues to provide system status. Uploads and extraction review use the local API in this phase.
 
 ### Files and dependencies
 
@@ -56,14 +56,14 @@ Added pdfplumber, PDFium bindings, Pillow, python-docx, openpyxl, python-pptx, m
 
 | Check | Commands | Result |
 |---|---|---|
-| Backend and extraction | `uv sync`, `uv run --frozen ruff check`, `ruff format --check`, `uv run --frozen pytest -q` | Ruff passed. 31 backend tests passed, including per-format extraction, real OCR, validation, concurrency and restart checks. |
+| Backend and extraction | `uv sync`, `uv run --frozen ruff check`, `ruff format --check`, `uv run --frozen pytest -q` | Ruff passed. 32 backend tests passed, including per-format extraction, real OCR, validation, concurrency and restart checks. |
 | Migration and live API | `alembic upgrade 0001_workspace_foundation`, `alembic upgrade head`, `alembic check` and temporary Uvicorn HTTP probe | A database at Phase 1 upgraded with no ORM drift. The live API processed native and scanned PDFs, deduplicated repeats and retained both results after server restart. |
 | Frontend regression | OpenAPI export, `npm run contracts`, `npm run build` and `npm run test:e2e` with Chromium | Build and browser status regression passed. |
 | Dependency advisory check | `uv export` of locked runtime packages, then `uvx pip-audit` | The rescan after updating Pillow found zero known advisories. |
 
 ### Performance and security observations
 
-A local HTTP smoke run took approximately 1.75 seconds for a two-page native PDF and 1.92 seconds for a one-page scanned PDF, including queue polling. Both ran through Bubblewrap. These are individual development fixtures, measured before the Pillow dependency update. Upload limits, traversal rejection, disallowed Office XML and cross-origin behavior are exercised in tests. Windows and production isolation remain unverified.
+A local HTTP smoke run took approximately 1.75 seconds for a two-page native PDF and 1.92 seconds for a one-page scanned PDF, including queue polling. Both ran through Bubblewrap. These are individual development fixtures, measured before the Pillow dependency update. Upload limits, traversal rejection, disallowed Office XML and cross-origin behavior are exercised in tests. The first hosted run exposed a parser startup difference on GitHub's Linux image. The worker now verifies its full sandbox configuration with synthetic input before selecting it and reports its fallback mode. Windows and production isolation remain unverified.
 
 ### Incomplete and upcoming
 

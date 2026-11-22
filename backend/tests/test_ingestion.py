@@ -124,7 +124,7 @@ def test_formats(local, format):
     assert client.get(result_url).json()["code"] == "extraction_pending"
     assert worker.run_one()
     job = client.get(job_url).json()
-    assert job["status"] == "succeeded", job
+    assert job["status"] == "succeeded", job.get("error_code")
     assert job["attempts"] == 1
     assert job["pipeline_version"] == "ingestion-v1"
     response = client.get(result_url)
@@ -196,7 +196,7 @@ def test_real_ocr(local, format):
     assert response.status_code == 202, response.text
     assert worker.run_one()
     record = client.get(response.headers["Location"]).json()
-    assert record["status"] == "succeeded", record
+    assert record["status"] == "succeeded", record.get("error_code")
     doc_id = response.json()["document"]["id"]
     unit = client.get(f"{BASE}/documents/{doc_id}/extraction").json()["units"][0]
     assert unit["locator"]["page"] == 1
@@ -227,7 +227,7 @@ def test_mixed_pdf_uses_ocr_only_on_scanned_page(local):
     assert response.status_code == 202
     assert worker.run_one()
     record = client.get(response.headers["Location"]).json()
-    assert record["status"] == "succeeded", record
+    assert record["status"] == "succeeded", record.get("error_code")
     doc_id = response.json()["document"]["id"]
     first, second = client.get(f"{BASE}/documents/{doc_id}/extraction").json()["units"]
     assert first["text"] == "Native page"
@@ -369,3 +369,17 @@ def test_lifespan_worker_processes_real_upload(migration, database: Path):
             time.sleep(0.05)
         else:
             pytest.fail("The background worker did not finish before the deadline.")
+
+
+def test_process_fallback_without_bubblewrap(local, monkeypatch):
+    monkeypatch.setattr("smartdoc.ingestion.worker.shutil.which", lambda _: None)
+    client, worker = local
+    response = post(client, "fallback.txt", b"Fallback process text")
+    assert response.status_code == 202
+    assert worker.run_one()
+    job = client.get(response.headers["Location"]).json()
+    assert job["status"] == "succeeded", job.get("error_code")
+    doc_id = response.json()["document"]["id"]
+    extraction = client.get(f"{BASE}/documents/{doc_id}/extraction").json()
+    assert extraction["metadata"]["isolation"] == "process"
+    assert extraction["units"][0]["text"] == "Fallback process text"
