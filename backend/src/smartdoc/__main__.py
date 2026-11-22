@@ -13,6 +13,7 @@ def main() -> None:
         port=settings.port,
         log_config=logging_config(settings.log_level),
         access_log=False,
+        proxy_headers=False,
     )
 
 

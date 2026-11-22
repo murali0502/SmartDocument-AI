@@ -24,6 +24,6 @@ def migration(database: Path) -> Config:
 
 @pytest.fixture
 def client(database: Path):
-    app = create_app(Settings(database_path=database))
+    app = create_app(Settings(database_path=database, ingestion_worker=False))
     with TestClient(app) as test_client:
         yield test_client

@@ -1,6 +1,6 @@
 # SmartDoc AI
 
-SmartDoc AI is a local-first project for source-grounded document intelligence. Next Concept Modelling (NCM) is its proposed approach to concept and relationship analysis. The Phase 1 application provides a local system status screen, a versioned FastAPI service, and a migrated SQLite store.
+SmartDoc AI is a local-first project for source-grounded document intelligence. Next Concept Modelling (NCM) is its proposed approach to concept and relationship analysis. The application provides a local system status screen, a versioned FastAPI service, and a document ingestion API backed by SQLite.
 
 ## Start locally
 
@@ -47,6 +47,10 @@ npm run dev
 Open http://127.0.0.1:5173. The status screen checks the API and SQLite schema on load and when you select **Refresh checks**. The link in the header opens the generated API contract.
 
 The backend listens on `127.0.0.1:8000` by default. The frontend forwards same-origin API requests to that backend.
+
+## Ingest a document
+
+Use the [ingestion API guide](docs/API_DOCUMENTATION.md#document-ingestion) to upload a file, check its job, and fetch the extraction. The API starts a local ingestion worker automatically. Install Tesseract with English language data to process scanned PDFs and images. Native documents use their format-specific parsers.
 
 ## Develop and verify
 

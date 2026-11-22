@@ -1,6 +1,8 @@
 # Database and storage design
 
-The first migration implements User, Workspace and Membership. The remaining records describe the proposed logical schema.
+The first migration implements User, Workspace and Membership. The second adds Document, IngestionJob and IngestionResult and seeds the single local workspace. The remaining records describe the proposed logical schema.
+
+A Document records the original filename, format, SHA-256 and byte size. The `(workspace_id, sha256)` constraint deduplicates bytes. The blob key is derived from the workspace and digest. Jobs hold processing state, attempts, lease and pipeline version. The manifest publishes with successful job status in the same transaction. A process interruption after a blob rename and before a database commit can leave an unreferenced blob. A repeat upload of the same digest replaces it.
 
 | Family | Records and key constraints |
 |---|---|

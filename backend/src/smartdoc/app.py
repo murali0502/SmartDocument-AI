@@ -1,7 +1,9 @@
+import asyncio
 import logging
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from importlib.metadata import version
+from threading import Event
 from time import perf_counter
 from uuid import uuid4
 
@@ -11,8 +13,13 @@ from starlette.exceptions import HTTPException
 
 from smartdoc.api.errors import http_error, problem, validation_error
 from smartdoc.api.health import router
+from smartdoc.api.ingestion import ingestion_error
+from smartdoc.api.ingestion import router as ingestion_router
 from smartdoc.config import MIGRATIONS_DIR, Settings
+from smartdoc.ingestion.contracts import ExtractionError
+from smartdoc.ingestion.worker import IngestionWorker
 from smartdoc.persistence.database import create_database_engine
+from smartdoc.persistence.ingestion_store import IngestionStore
 from smartdoc.persistence.readiness import DatabaseReadiness
 
 logger = logging.getLogger(__name__)
@@ -23,13 +30,29 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     path = settings.database_path.resolve()
     engine = create_database_engine(path, read_only=True)
     readiness = DatabaseReadiness(path, engine, MIGRATIONS_DIR)
+    storage = settings.storage_path or path.parent / f"{path.name}.storage"
+    writer = create_database_engine(path)
+    store = IngestionStore(writer, storage.resolve())
+    worker = IngestionWorker(store, readiness, settings.processing_timeout)
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+        stop = Event()
+        task = (
+            asyncio.create_task(asyncio.to_thread(worker.run_until_stopped, stop))
+            if settings.ingestion_worker
+            else None
+        )
         try:
             yield
         finally:
-            engine.dispose()
+            stop.set()
+            try:
+                if task is not None:
+                    await task
+            finally:
+                writer.dispose()
+                engine.dispose()
 
     app = FastAPI(
         title="SmartDoc AI",
@@ -40,9 +63,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         lifespan=lifespan,
     )
     app.state.database_readiness = readiness
+    app.state.ingestion_store = store
+    app.state.settings = settings
+    app.add_exception_handler(ExtractionError, ingestion_error)
     app.add_exception_handler(HTTPException, http_error)
     app.add_exception_handler(RequestValidationError, validation_error)
     app.include_router(router)
+    app.include_router(ingestion_router)
 
     @app.middleware("http")
     async def correlate_request(

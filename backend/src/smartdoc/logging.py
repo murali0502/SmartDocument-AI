@@ -12,7 +12,15 @@ class JsonFormatter(logging.Formatter):
             "logger": record.name,
             "message": record.getMessage(),
         }
-        for name in ("request_id", "method", "route", "status", "duration_ms", "error_type"):
+        for name in (
+            "request_id",
+            "method",
+            "route",
+            "status",
+            "duration_ms",
+            "error_type",
+            "job_id",
+        ):
             if name in record.__dict__:
                 data[name] = record.__dict__[name]
         return json.dumps(data)
