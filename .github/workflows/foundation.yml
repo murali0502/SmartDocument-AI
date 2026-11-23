@@ -45,3 +45,17 @@ jobs:
         run: |
           npx playwright install --with-deps chromium
           npm run test:e2e
+      - name: Verify hosted container starts with its persistent volume
+        run: |
+          docker build -t smartdoc-hosted .
+          password=$(openssl rand -hex 24)
+          docker volume create smartdoc-hosted-data
+          trap 'docker logs smartdoc-hosted; docker rm -f smartdoc-hosted; docker volume rm smartdoc-hosted-data' EXIT
+          docker run -d --name smartdoc-hosted -p 127.0.0.1:18082:8000 \
+            -v smartdoc-hosted-data:/data -e RAILWAY_ENVIRONMENT_ID=container-check \
+            -e SMARTDOC_HOSTED_PASSWORD="$password" smartdoc-hosted
+          origin=http://127.0.0.1:18082
+          curl --fail --silent --show-error --retry 20 --retry-all-errors --retry-delay 1 \
+            "$origin/api/v1/health/ready" > /dev/null
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' "$origin/")" = 401
+          curl --fail --silent --user "smartdoc:$password" "$origin/api/v1/docs" | grep -q '/swagger/swagger-ui-bundle.js'
