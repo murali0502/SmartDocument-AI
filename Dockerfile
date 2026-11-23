@@ -1,9 +1,7 @@
 FROM node:24-bookworm-slim AS frontend
 WORKDIR /build
 COPY frontend/package.json frontend/package-lock.json ./
-RUN --mount=type=secret,id=build_ca \
-    if [ -f /run/secrets/build_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/build_ca; fi; \
-    SCARF_ANALYTICS=false npm ci
+RUN SCARF_ANALYTICS=false npm ci
 COPY frontend/index.html frontend/tsconfig.json frontend/vite.config.ts ./
 COPY frontend/src/ ./src/
 RUN npm run build \
@@ -17,14 +15,10 @@ FROM python:3.12-slim-bookworm AS backend
 COPY --from=ghcr.io/astral-sh/uv:0.13.9 /uv /usr/local/bin/uv
 WORKDIR /build
 COPY backend/pyproject.toml backend/uv.lock ./
-RUN --mount=type=secret,id=build_ca \
-    if [ -f /run/secrets/build_ca ]; then export SSL_CERT_FILE=/run/secrets/build_ca; fi; \
-    uv sync --system-certs --locked --no-dev --no-install-project
+RUN uv sync --system-certs --locked --no-dev --no-install-project
 COPY backend/migrations/ ./migrations/
 COPY backend/src/ ./src/
-RUN --mount=type=secret,id=build_ca \
-    if [ -f /run/secrets/build_ca ]; then export SSL_CERT_FILE=/run/secrets/build_ca; fi; \
-    uv sync --system-certs --locked --no-dev --no-editable
+RUN uv sync --system-certs --locked --no-dev --no-editable
 
 FROM python:3.12-slim-bookworm
 RUN apt-get update \
