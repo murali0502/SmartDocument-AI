@@ -38,10 +38,27 @@ class HTMLDocument(HTMLParser):
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
         self.parts: list[str] = []
+        self.position = 0
+        self.blocks: list[tuple[str, dict]] = []
+        self.hints: list[dict] = []
         self.hidden: list[str] = []
         self.tables: list[list[list[str]]] = []
         self.row: list[str] | None = None
         self.cell: list[str] | None = None
+
+    def append(self, text: str) -> None:
+        self.parts.append(text)
+        self.position += len(text)
+
+    def document_text(self) -> tuple[str, list[dict]]:
+        text = "".join(self.parts)
+        left = len(text) - len(text.lstrip())
+        end = len(text.rstrip())
+        return text.strip(), [
+            {**hint, "start": max(hint["start"], left) - left, "end": min(hint["end"], end) - left}
+            for hint in self.hints
+            if max(hint["start"], left) < min(hint["end"], end)
+        ]
 
     def handle_starttag(self, tag: str, _attrs: list) -> None:
         if tag in {"script", "style", "template"}:
@@ -56,7 +73,18 @@ class HTMLDocument(HTMLParser):
         elif tag in {"th", "td"} and self.row is not None:
             self.cell = []
         if tag in {"p", "br", "li", "tr", "div", "section", "h1", "h2", "h3", "h4", "h5", "h6"}:
-            self.parts.append("\n")
+            self.append("\n")
+        info: dict = {"start": self.position}
+        if tag in {"h1", "h2", "h3", "h4", "h5", "h6"}:
+            info.update(kind="heading", level=int(tag[1]))
+        elif tag == "li":
+            info["kind"] = "list_item"
+        elif tag == "pre":
+            info["kind"] = "code_block"
+        elif tag == "table":
+            info.update(kind="table", table_number=len(self.tables))
+        if "kind" in info:
+            self.blocks.append((tag, info))
 
     def handle_endtag(self, tag: str) -> None:
         if self.hidden:
@@ -66,13 +94,17 @@ class HTMLDocument(HTMLParser):
         if tag in {"td", "th"} and self.cell is not None and self.row is not None:
             self.row.append("".join(self.cell).strip())
             self.cell = None
-            self.parts.append("\t")
+            self.append("\t")
         elif tag == "tr":
             self.row = None
+        if self.blocks and self.blocks[-1][0] == tag:
+            _, block = self.blocks.pop()
+            self.hints.append({**block, "end": self.position})
+            self.append("\n")
 
     def handle_data(self, data: str) -> None:
         if not self.hidden:
-            self.parts.append(data)
+            self.append(data)
             if self.cell is not None:
                 self.cell.append(data)
 
@@ -104,7 +136,8 @@ def parse_text(path: Path, format: str) -> Extraction:
         html = HTMLDocument()
         html.feed(text)
         html.close()
-        units = [SourceUnit(kind="document", text="".join(html.parts).strip())]
+        normalized, hints = html.document_text()
+        units = [SourceUnit(kind="document", text=normalized, data={"structure_hints": hints})]
         units.extend(
             SourceUnit(kind="table", locator={"table": idx}, data={"rows": rows})
             for idx, rows in enumerate(html.tables, 1)

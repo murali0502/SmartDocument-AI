@@ -52,6 +52,10 @@ The backend listens on `127.0.0.1:8000` by default. The frontend forwards same-o
 
 Use the [ingestion API guide](docs/API_DOCUMENTATION.md#document-ingestion) to upload a file, check its job, and fetch the extraction. The API starts a local ingestion worker automatically. Install Tesseract with English language data to process scanned PDFs and images. Native documents use their format-specific parsers.
 
+## Inspect document structure
+
+The worker builds paginated structural elements and chunks after extraction. The [API guide](docs/API_DOCUMENTATION.md#document-structure-and-chunks) includes a PowerShell example that retrieves an exact source excerpt for a chunk.
+
 ## Develop and verify
 
 ```sh

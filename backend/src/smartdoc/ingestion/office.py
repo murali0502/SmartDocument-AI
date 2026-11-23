@@ -200,14 +200,18 @@ def _pptx(path: Path) -> tuple[list[SourceUnit], dict, list[str]]:
                 )
 
     for index, slide in enumerate(deck.slides, 1):
-        title = slide.shapes.title.text if slide.shapes.title else ""
+        title_shape = slide.shapes.title
+        title = title_shape.text if title_shape is not None else ""
         notes = slide.notes_slide.notes_text_frame if slide.has_notes_slide else None
         units.append(
             SourceUnit(
                 kind="slide",
                 locator={"slide": index},
                 text=title,
-                data={"notes": notes.text if notes else ""},
+                data={
+                    "notes": notes.text if notes else "",
+                    "title_shape": title_shape.shape_id if title_shape is not None else None,
+                },
             )
         )
         visit(slide.shapes, index)

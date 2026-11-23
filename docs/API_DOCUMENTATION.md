@@ -46,3 +46,29 @@ Invoke-RestMethod -Uri "$api/documents/$($upload.document.id)/extraction" |
 ```
 
 The receipt records filename, format, byte length and SHA-256. Locators use one-based page, slide, block and CSV row indices. Workbook cells use A1 references. PDF page sizes use points. OCR word boxes use raster pixels with a top-left origin and carry confidence and engine version. Native page text remains in `text`. OCR is in `data.ocr`. The extraction metadata records whether Bubblewrap or a standalone process isolated the parser.
+
+## Document structure and chunks
+
+Use the `document.id` returned by the upload. The paths below are relative to `/api/v1/workspaces/local/documents/{document_id}`.
+
+| Method and path | Behavior |
+|---|---|
+| `GET /structure` | Returns `pending`, `ready`, or `failed`, with a version and counts after a completed build. |
+| `GET /elements?limit=25&after=0` | Lists ordered logical elements, their parent IDs, and available anchors and locators. |
+| `GET /chunks?limit=25&after=0` | Lists ordered chunks, their primary evidence, separate overlap, section paths and physical locators. |
+| `GET /chunks/{chunk_id}/source` | Reopens the saved extraction fields and returns verified excerpts with their spans. A mismatch returns `409 invalid_provenance`. |
+
+Element and chunk pages use the last returned ordinal as `next_cursor`. Data is available once structure status is `ready`. A pending or failed build returns a specific 409 from the data routes. See [the chunking contract](STRUCTURE_AND_CHUNKING.md) for offset units and rules.
+
+### Check a chunk in PowerShell
+
+After uploading with the example above, run these requests when structure is ready.
+
+```powershell
+$document = "$api/documents/$($upload.document.id)"
+Invoke-RestMethod -Uri "$document/structure"
+$page = Invoke-RestMethod -Uri "$document/chunks?limit=1"
+$chunk = $page.items[0]
+Invoke-RestMethod -Uri "$document/chunks/$($chunk.id)/source" |
+  ConvertTo-Json -Depth 12
+```

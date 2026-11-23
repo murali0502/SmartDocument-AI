@@ -106,10 +106,147 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/local/documents/{document_id}/structure": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Structure */
+        get: operations["structure_api_v1_workspaces_local_documents__document_id__structure_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/local/documents/{document_id}/elements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Elements */
+        get: operations["elements_api_v1_workspaces_local_documents__document_id__elements_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/local/documents/{document_id}/chunks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Chunks */
+        get: operations["chunks_api_v1_workspaces_local_documents__document_id__chunks_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/local/documents/{document_id}/chunks/{chunk_id}/source": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Chunk Source */
+        get: operations["chunk_source_api_v1_workspaces_local_documents__document_id__chunks__chunk_id__source_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** Chunk */
+        Chunk: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Document Id
+             * Format: uuid
+             */
+            document_id: string;
+            /**
+             * Parent Element Id
+             * Format: uuid
+             */
+            parent_element_id: string;
+            /** Ordinal */
+            ordinal: number;
+            /** Text */
+            text: string;
+            /** Token Count */
+            token_count: number;
+            /** Character Count */
+            character_count: number;
+            /** Locator */
+            locator: {
+                [key: string]: number | string;
+            };
+            /** Section Path */
+            section_path: components["schemas"]["SectionRef"][];
+            /**
+             * Element Type
+             * @enum {string}
+             */
+            element_type: "document" | "page" | "slide" | "sheet" | "section" | "heading" | "paragraph" | "sentence" | "table" | "table_row" | "table_cell" | "list" | "list_item" | "figure" | "caption" | "footnote" | "reference" | "code_block" | "math_expression";
+            /** Strategy */
+            strategy: string;
+            primary: components["schemas"]["SourceSpan"];
+            /** Overlap */
+            overlap: components["schemas"]["Evidence"][];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** ChunkPage */
+        ChunkPage: {
+            /** Items */
+            items: components["schemas"]["Chunk"][];
+            /** Next Cursor */
+            next_cursor: number | null;
+        };
+        /** ChunkSource */
+        ChunkSource: {
+            /**
+             * Chunk Id
+             * Format: uuid
+             */
+            chunk_id: string;
+            /** Locator */
+            locator: {
+                [key: string]: number | string;
+            };
+            primary: components["schemas"]["Evidence"];
+            /** Overlap */
+            overlap: components["schemas"]["Evidence"][];
+        };
         /** DocumentJob */
         DocumentJob: {
             document: components["schemas"]["DocumentRecord"];
@@ -142,6 +279,45 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** Element */
+        Element: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Parent Id */
+            parent_id: string | null;
+            /** Ordinal */
+            ordinal: number;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "document" | "page" | "slide" | "sheet" | "section" | "heading" | "paragraph" | "sentence" | "table" | "table_row" | "table_cell" | "list" | "list_item" | "figure" | "caption" | "footnote" | "reference" | "code_block" | "math_expression";
+            /** Locator */
+            locator: {
+                [key: string]: number | string;
+            };
+            /** Section Path */
+            section_path: components["schemas"]["SectionRef"][];
+            source?: components["schemas"]["SourceSpan"] | null;
+            /** Label */
+            label?: string | null;
+        };
+        /** ElementPage */
+        ElementPage: {
+            /** Items */
+            items: components["schemas"]["Element"][];
+            /** Next Cursor */
+            next_cursor: number | null;
+        };
+        /** Evidence */
+        Evidence: {
+            source: components["schemas"]["SourceSpan"];
+            /** Text */
+            text: string;
         };
         /** Extraction */
         Extraction: {
@@ -227,6 +403,35 @@ export interface components {
              */
             checked_at: string;
         };
+        /** SectionRef */
+        SectionRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Title */
+            title: string;
+            /** Level */
+            level: number;
+        };
+        /** SourceSpan */
+        SourceSpan: {
+            /** Unit */
+            unit: number;
+            /** Field */
+            field: (string | number)[];
+            /** Start */
+            start: number;
+            /** End */
+            end: number;
+            /**
+             * Projection
+             * @default text
+             * @enum {string}
+             */
+            projection: "text" | "json_scalar";
+        };
         /** SourceUnit */
         SourceUnit: {
             /**
@@ -247,6 +452,30 @@ export interface components {
             data?: {
                 [key: string]: unknown;
             };
+        };
+        /** StructureInfo */
+        StructureInfo: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "ready" | "failed";
+            /** Version */
+            version?: string | null;
+            /** Completed At */
+            completed_at?: string | null;
+            /**
+             * Element Count
+             * @default 0
+             */
+            element_count: number;
+            /**
+             * Chunk Count
+             * @default 0
+             */
+            chunk_count: number;
+            /** Error Code */
+            error_code?: string | null;
         };
         /** UploadReceipt */
         UploadReceipt: {
@@ -454,6 +683,137 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Extraction"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    structure_api_v1_workspaces_local_documents__document_id__structure_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StructureInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    elements_api_v1_workspaces_local_documents__document_id__elements_get: {
+        parameters: {
+            query?: {
+                after?: number;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ElementPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    chunks_api_v1_workspaces_local_documents__document_id__chunks_get: {
+        parameters: {
+            query?: {
+                after?: number;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChunkPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    chunk_source_api_v1_workspaces_local_documents__document_id__chunks__chunk_id__source_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+                chunk_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChunkSource"];
                 };
             };
             /** @description Validation Error */

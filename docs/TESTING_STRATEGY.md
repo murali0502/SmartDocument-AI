@@ -6,4 +6,6 @@ The browser test runs the production frontend build and real API on loopback. It
 
 Phase 2 exercises upload, claiming, subprocess extraction and persistence on independent fixtures for every supported format. OCR assertions cover scanned PDFs and three image types and verify page selection on a mixed PDF. Tests check invalid inputs, streamed size limits, concurrent deduplication, restart recovery and fencing of expired claims. OCR-enabled CI installs Tesseract English data.
 
-Later phases add citation offset and geometry round trips, NLP and NCM annotations, ranked retrieval benchmarks, authorization tests, and the full upload-to-source workflow. The [roadmap](DEVELOPMENT_ROADMAP.md) tracks their exit conditions.
+Phase 3 covers Unicode and CRLF spans, fragment boundaries and overlap, hierarchy, table cell anchors, and separate OCR and slide fields. Integration checks migrate a populated Phase 2 database, build a snapshot, verify source ranges after restart, and reject mismatched evidence.
+
+Later phases add viewer geometry round trips, NLP and NCM annotations, ranked retrieval benchmarks, authorization tests, and the full upload-to-source workflow. The [roadmap](DEVELOPMENT_ROADMAP.md) tracks their exit conditions.

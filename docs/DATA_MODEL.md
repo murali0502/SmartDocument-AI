@@ -1,8 +1,8 @@
 # Database and storage design
 
-The first migration implements User, Workspace and Membership. The second adds Document, IngestionJob and IngestionResult and seeds the single local workspace. The remaining records describe the proposed logical schema.
+The first migration implements User, Workspace and Membership. The second adds Document, IngestionJob and IngestionResult and seeds the single local workspace. The third adds StructureRun, StructureElement and DocumentChunk with a persisted job-scoped snapshot. The remaining records describe the proposed logical schema.
 
-A Document records the original filename, format, SHA-256 and byte size. The `(workspace_id, sha256)` constraint deduplicates bytes. The blob key is derived from the workspace and digest. Jobs hold processing state, attempts, lease and pipeline version. The manifest publishes with successful job status in the same transaction. A process interruption after a blob rename and before a database commit can leave an unreferenced blob. A repeat upload of the same digest replaces it.
+A Document records the original filename, format, SHA-256 and byte size. The `(workspace_id, sha256)` constraint deduplicates bytes. The blob key is derived from the workspace and digest. Jobs hold processing state, attempts, lease and pipeline version. The manifest publishes with successful job status in the same transaction. A process interruption after a blob rename and before a database commit can leave an unreferenced blob. A repeat upload of the same digest replaces it. Structure runs depend on an immutable ingestion result. Elements have an ordered, self-referential parent link. Chunks reference a specific parent element and store their primary and overlap spans.
 
 | Family | Records and key constraints |
 |---|---|

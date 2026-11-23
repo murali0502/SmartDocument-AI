@@ -1,6 +1,6 @@
 # SmartDoc AI project status
 
-Updated 22 November 2026. The Phase 0 architecture is approved. Phases 1 and 2 are implemented and verified on Linux. Phase 3 is pending.
+Updated 23 November 2026. The Phase 0 architecture is approved. Phases 1 through 3 are implemented and verified on Linux. Phase 4 is pending.
 
 ## Phase 1 implementation report
 
@@ -68,3 +68,33 @@ A local HTTP smoke run took approximately 1.75 seconds for a two-page native PDF
 ### Incomplete and upcoming
 
 Legacy DOC, production access controls, browser document workflows, user-triggered reprocessing, and broad OCR accuracy evaluation remain open. Phase 3 should add stable structural IDs, source-offset maps and structure-aware chunking with exact provenance tests.
+
+## Phase 3 implementation report
+
+### Features and decisions
+
+- Added versioned structural snapshots, stable element and chunk IDs, nested section and list paths, and document, page, slide, sheet, table, row and cell locators.
+- Built chunks within their structural element. Sentence or line boundaries take precedence where possible. Every primary fragment has its own half-open Unicode range. Overlap is stored with independent provenance.
+- Added exact-source verification against the saved ingestion manifest, including text and numeric or Boolean cell projections. New PDF and HTML parser hints improve heading and table placement. Older manifests use their existing metadata.
+- Added paginated elements and chunks APIs and an exact-source endpoint. The single existing background worker backfills unbuilt successful extractions and publishes each snapshot atomically.
+
+### Files and dependencies
+
+Created `backend/migrations/versions/0003_document_structure.py`, the structural contracts and builders, chunk policy and partitioner, structure storage, API routes, and `backend/tests/test_structure.py`. Updated the ingestion worker and PDF, HTML and slide adapters, the generated API types, README, changelog, and implementation guides. Added `docs/STRUCTURE_AND_CHUNKING.md`. No dependencies were added.
+
+### Commands and observed results
+
+| Check | Commands or workflow | Result |
+|---|---|---|
+| Backend and chunking | `uv sync --locked`, Ruff lint and format, and `uv run --frozen pytest -q` | 45 backend tests passed, including 13 Phase 3 cases. |
+| Schema and backfill | `alembic upgrade head`, `alembic check`, and a populated Phase 2 migration test | Reached `0003_document_structure` with no ORM drift. The existing extraction produced a snapshot without another upload. |
+| Live source workflow | Temporary Uvicorn server and HTTP upload, structure, chunk and source requests | The repository architecture document and a mixed native/scanned technical PDF retained identical verified excerpts after API restart. |
+| Frontend contract and regression | OpenAPI export, `npm run contracts`, `npm run build` and Chromium Playwright | Generated types, TypeScript, Vite and the browser status test passed. |
+
+### Performance and security observations
+
+In one local HTTP run, the repository's architecture document produced 101 elements and 38 chunks in 1.81 seconds. A two-page mixed PDF produced 9 elements and 3 chunks in 1.94 seconds. These measurements include ingestion and queue polling. The API checks the local workspace and validates requested source spans. Tests verified that a mismatched excerpt returns a provenance error and a chunk cannot be located through another document.
+
+### Incomplete and upcoming
+
+PDF heading inference remains heuristic. An offset refers to an extracted field rather than a location in the binary file. Browser document workflows, legacy DOC, Windows execution and production isolation remain unverified or scheduled for later phases. Phase 4 should add and evaluate CPU-friendly linguistic annotation on top of the stable source spans.

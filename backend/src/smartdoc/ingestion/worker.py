@@ -17,6 +17,7 @@ from smartdoc.ingestion.contracts import Extraction, ExtractionError
 from smartdoc.ingestion.extract import MAX_RESULT_BYTES
 from smartdoc.persistence.ingestion_store import Claim, IngestionStore
 from smartdoc.persistence.readiness import DatabaseReadiness
+from smartdoc.persistence.structure_store import StructureStore
 
 logger = logging.getLogger(__name__)
 
@@ -42,10 +43,18 @@ def process_environment() -> dict[str, str]:
 
 
 class IngestionWorker:
-    def __init__(self, store: IngestionStore, readiness: DatabaseReadiness, timeout: int) -> None:
+    def __init__(
+        self,
+        store: IngestionStore,
+        readiness: DatabaseReadiness,
+        timeout: int,
+        *,
+        structures: StructureStore | None = None,
+    ) -> None:
         self.store = store
         self.readiness = readiness
         self.timeout = timeout
+        self.structures = structures
 
     @cached_property
     def sandbox(self) -> str | None:
@@ -194,8 +203,11 @@ class IngestionWorker:
     def run_until_stopped(self, stop: Event) -> None:
         while not stop.is_set():
             try:
-                if self.readiness.check() == "ready" and self.run_one():
-                    continue
+                if self.readiness.check() == "ready":
+                    ingested = self.run_one()
+                    structured = self.structures is not None and self.structures.build_next()
+                    if ingested or structured:
+                        continue
             except (OSError, SQLAlchemyError) as error:
                 logger.warning("ingestion_worker_retry", extra={"error_type": type(error).__name__})
             stop.wait(0.6)

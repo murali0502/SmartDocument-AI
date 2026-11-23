@@ -1,5 +1,11 @@
 # Changelog
 
+## Phase 3 — Document structure and chunks
+
+- Added stable structural nodes, page and section locators, and format-aware table and list hierarchy.
+- Added bounded chunks with exact Unicode spans and separate overlap evidence.
+- Added persisted structure snapshots, automatic backfill, and paginated structure and source APIs.
+
 ## Phase 2 — Document ingestion
 
 - Added streamed uploads, checksums, workspace deduplication, durable jobs and persisted extraction manifests.

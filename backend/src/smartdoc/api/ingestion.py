@@ -114,6 +114,9 @@ async def ingestion_error(request: Request, error: ExtractionError) -> Response:
         "not_found": 404,
         "extraction_pending": 409,
         "extraction_failed": 409,
+        "structure_pending": 409,
+        "structure_failed": 409,
+        "invalid_provenance": 409,
     }.get(error.code, 400)
     return problem(request, status, error.code, str(error))
 

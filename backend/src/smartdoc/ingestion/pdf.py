@@ -11,6 +11,7 @@ from pathlib import Path
 from PIL import Image, ImageOps
 
 from smartdoc.ingestion.contracts import Extraction, ExtractionError, SourceUnit
+from smartdoc.structure.pdf_layout import page_hints
 
 MAX_PAGES = 100
 MAX_PIXELS = 12_000_000
@@ -119,12 +120,17 @@ def parse_pdf(path: Path, format: str) -> Extraction:
             metadata["pages"] = len(document.pages)
             for index, page in enumerate(document.pages, 1):
                 native = page.extract_text() or ""
+                tables = page.find_tables() if native else []
                 data = {
                     "width": float(page.width),
                     "height": float(page.height),
                     "coordinate_unit": "pdf_point",
-                    "tables": page.extract_tables() if native else [],
+                    "tables": [table.extract() for table in tables],
                 }
+                if native.strip():
+                    data["structure_hints"] = page_hints(
+                        native, page.extract_text_lines(), [table.bbox for table in tables]
+                    )
                 if not native.strip():
                     ocr_pages += 1
                     if ocr_pages > MAX_OCR_PAGES:

@@ -15,12 +15,14 @@ from smartdoc.api.errors import http_error, problem, validation_error
 from smartdoc.api.health import router
 from smartdoc.api.ingestion import ingestion_error
 from smartdoc.api.ingestion import router as ingestion_router
+from smartdoc.api.structure import router as structure_router
 from smartdoc.config import MIGRATIONS_DIR, Settings
 from smartdoc.ingestion.contracts import ExtractionError
 from smartdoc.ingestion.worker import IngestionWorker
 from smartdoc.persistence.database import create_database_engine
 from smartdoc.persistence.ingestion_store import IngestionStore
 from smartdoc.persistence.readiness import DatabaseReadiness
+from smartdoc.persistence.structure_store import StructureStore
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +35,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     storage = settings.storage_path or path.parent / f"{path.name}.storage"
     writer = create_database_engine(path)
     store = IngestionStore(writer, storage.resolve())
-    worker = IngestionWorker(store, readiness, settings.processing_timeout)
+    structures = StructureStore(writer)
+    worker = IngestionWorker(store, readiness, settings.processing_timeout, structures=structures)
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
@@ -64,12 +67,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.state.database_readiness = readiness
     app.state.ingestion_store = store
+    app.state.structure_store = structures
     app.state.settings = settings
     app.add_exception_handler(ExtractionError, ingestion_error)
     app.add_exception_handler(HTTPException, http_error)
     app.add_exception_handler(RequestValidationError, validation_error)
     app.include_router(router)
     app.include_router(ingestion_router)
+    app.include_router(structure_router)
 
     @app.middleware("http")
     async def correlate_request(
