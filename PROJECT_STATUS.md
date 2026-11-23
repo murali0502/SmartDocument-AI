@@ -1,6 +1,6 @@
 # SmartDoc AI project status
 
-Updated 23 November 2026. The Phase 0 architecture is approved. Phases 1 through 3 are implemented and verified on Linux. Phase 4 is pending.
+Updated 23 November 2026. The Phase 0 architecture is approved. Phases 1 through 4 are implemented and verified on Linux. Phase 5 is pending.
 
 ## Phase 1 implementation report
 
@@ -98,3 +98,36 @@ In one local HTTP run, the repository's architecture document produced 101 eleme
 ### Incomplete and upcoming
 
 PDF heading inference remains heuristic. An offset refers to an extracted field rather than a location in the binary file. Browser document workflows, legacy DOC, Windows execution and production isolation remain unverified or scheduled for later phases. Phase 4 should add and evaluate CPU-friendly linguistic annotation on top of the stable source spans.
+
+## Phase 4 implementation report
+
+### Features and decisions
+
+- Added durable linguistic annotations with exact spans into saved Phase 3 chunks. The default rules profile supports terms, normalized tokens, sentences, dates, times, measurements, limited relationship and role candidates, and conservative demonstrative coreference.
+- The optional English spaCy profile adds learned named entities, noun phrases, lemmas, POS and dependencies. It checks dependency support for matching relation candidates. The rules and trained profiles both preserve negation and modality.
+- Added local, opt-in MiniLM embeddings and discriminative three-way NLI. The installer verifies pinned artifacts, and API calls load them lazily. The default API starts without model resources. Phase 4 performs annotation and direct model inference. Corpus retrieval begins in Phase 7.
+- Added migration `0004_linguistic_annotations`. A versioned profile key defines each run. The worker commits numbered batches and resumes from saved progress after restart. Earlier structured documents enter the queue automatically.
+
+### Files and dependencies
+
+Created the migration, NLP package, annotation store and models, NLP routes and `backend/tests/test_nlp.py`. Added `docs/NLP_PIPELINE.md`, `evaluation/datasets/phase4-test.json` and `scripts/eval_nlp.py`. Updated the worker, schema registration, configuration, generated frontend API contract and development, API, model, data and testing docs. Added spaCy, ONNX Runtime and tokenizers under the optional `nlp` extra. No models or installation cache files are stored in Git.
+
+### Commands and observed results
+
+| Check | Commands or workflow | Result |
+|---|---|---|
+| Schema and resume | Alembic upgrade from populated Phase 3, `alembic check`, and annotation API tests | The migration preserved source data. Partial annotation batches resumed after restart. |
+| Backend | `uv sync --locked`, Ruff lint and format, and `uv run --frozen pytest -q` | The default backend profile passed with the opt-in model test skipped. |
+| Optional real models | `uv sync --extra nlp`, explicit pinned artifact installer, then `SMARTDOC_TEST_MODEL_DIR=… uv run --frozen --extra nlp pytest -q` | 51 tests passed with real spaCy, embeddings, and NLI. |
+| Frontend | OpenAPI export, `npm run contracts`, `npm run build`, and Playwright Chromium | Passed. |
+| Evaluation and scope | `scripts/eval_nlp.py --models …`, plus `pip-audit` against locked runtime packages | 9 entity and 6 relation labels were evaluated. The dependency audit found no known advisories. |
+
+### Performance and security observations
+
+The rules profile scored 0.80 entity F1 and the optional spaCy profile scored 0.90. Exact relation F1 was 0.80 in both. The embedding probe ranked four labeled passages first. NLI classified six labeled pairs correctly. These are small engineering samples. With all three optional resources, peak benchmark RSS was about 315 MiB. In one run, a warm embedding took about 2.8 ms and a warm NLI pair took about 7.5 ms on the development CPU. These timings exclude API latency.
+
+The model endpoints require the local workspace and explicit request header, and do not send the input text to any service. ONNX and tokenizer bytes are hash-checked before loading. Optional integration tests confirm an unavailable model returns an explicit error.
+
+### Incomplete and upcoming
+
+Cross-chunk coreference, broad multilingual analysis, calibrated confidence, larger benchmarks, Windows execution, and optional model support outside the tested Linux CPU remain unverified. Phase 5 should use the annotated spans to build versioned, evidence-grounded concept and relationship candidates with conservative alias resolution.

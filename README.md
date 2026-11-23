@@ -56,6 +56,10 @@ Use the [ingestion API guide](docs/API_DOCUMENTATION.md#document-ingestion) to u
 
 The worker builds paginated structural elements and chunks after extraction. The [API guide](docs/API_DOCUMENTATION.md#document-structure-and-chunks) includes a PowerShell example that retrieves an exact source excerpt for a chunk.
 
+## Inspect linguistic annotations
+
+Phase 4 automatically annotates structured chunks with the standard rules profile. The [NLP pipeline guide](docs/NLP_PIPELINE.md) explains the optional CPU models and [annotation routes](docs/API_DOCUMENTATION.md#linguistic-annotations).
+
 ## Develop and verify
 
 ```sh

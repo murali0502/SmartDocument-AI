@@ -16,6 +16,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from smartdoc.ingestion.contracts import Extraction, ExtractionError
 from smartdoc.ingestion.extract import MAX_RESULT_BYTES
 from smartdoc.persistence.ingestion_store import Claim, IngestionStore
+from smartdoc.persistence.nlp_store import NlpStore
 from smartdoc.persistence.readiness import DatabaseReadiness
 from smartdoc.persistence.structure_store import StructureStore
 
@@ -50,11 +51,13 @@ class IngestionWorker:
         timeout: int,
         *,
         structures: StructureStore | None = None,
+        annotations: NlpStore | None = None,
     ) -> None:
         self.store = store
         self.readiness = readiness
         self.timeout = timeout
         self.structures = structures
+        self.annotations = annotations
 
     @cached_property
     def sandbox(self) -> str | None:
@@ -206,7 +209,8 @@ class IngestionWorker:
                 if self.readiness.check() == "ready":
                     ingested = self.run_one()
                     structured = self.structures is not None and self.structures.build_next()
-                    if ingested or structured:
+                    annotated = self.annotations is not None and self.annotations.build_next()
+                    if ingested or structured or annotated:
                         continue
             except (OSError, SQLAlchemyError) as error:
                 logger.warning("ingestion_worker_retry", extra={"error_type": type(error).__name__})

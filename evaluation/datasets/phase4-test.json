@@ -1,0 +1,39 @@
+{
+  "description": "Small hand-labeled English test set for feasibility. Entries were authored for SmartDoc and do not represent deployment accuracy.",
+  "linguistic": [
+    {"text": "Alice Morgan works at Microsoft in Seattle.", "entities": [["Alice Morgan","PERSON"],["Microsoft","ORG"],["Seattle","GPE"]], "relations": [], "temporal": []},
+    {"text": "The variable-speed pump requires a particulate filter.", "entities": [], "relations": [["variable-speed pump","REQUIRES","particulate filter",false]], "temporal": []},
+    {"text": "The controller does not use a service battery.", "entities": [], "relations": [["controller","USES","service battery",true]], "temporal": []},
+    {"text": "The temperature probe measures coolant temperature.", "entities": [], "relations": [["temperature probe","MEASURES","coolant temperature",false]], "temporal": []},
+    {"text": "The blower consumes electricity.", "entities": [], "relations": [["blower","USES","electricity",false]], "temporal": []},
+    {"text": "APIs such as HTTP are described in the manual.", "entities": [["HTTP","TECHNOLOGY"]], "relations": [], "temporal": []},
+    {"text": "The test began on 2025-04-08 at 07:45.", "entities": [["2025-04-08","DATE"],["07:45","TIME"]], "relations": [], "temporal": [["2025-04-08","2025-04-08"],["07:45","07:45"]]},
+    {"text": "The rated pressure is 120 kPa. Check again next week.", "entities": [["120 kPa","MEASUREMENT"],["next week","DATE"]], "relations": [], "temporal": [["next week",null]]},
+    {"text": "A pressure gauge rests beside the calibration rack.", "entities": [], "relations": [], "temporal": []},
+    {"text": "The document uses Python for rendering when tests run.", "entities": [["Python","TECHNOLOGY"]], "relations": [["document","USES","Python",false]], "temporal": []},
+    {"text": "Neural networks are widely used. These models can learn.", "entities": [], "relations": [], "temporal": [], "coreference": [["These models","Neural networks"]]},
+    {"text": "The sensor uses a thermistor. This switch is new.", "entities": [], "relations": [["sensor","USES","thermistor",false]], "temporal": [], "coreference": []}
+  ],
+  "passages": [
+    "An inlet strainer stops debris before it reaches the hydraulic pump.",
+    "A pressure transducer converts fluid pressure into an electrical signal.",
+    "The backup battery supplies power during a mains outage.",
+    "A refrigeration condenser rejects heat into the surrounding air.",
+    "The maintenance log must be retained for three calendar years.",
+    "A flow meter reports the volume of liquid passing through a pipe."
+  ],
+  "queries": [
+    ["What prevents dirt from damaging the pump?",0],
+    ["Which device turns hydraulic pressure into an electrical output?",1],
+    ["How long should maintenance records be kept?",4],
+    ["What provides energy when the primary supply fails?",2]
+  ],
+  "nli": [
+    ["The primary valve is open.","The primary valve is closed.","contradiction"],
+    ["The guide requires a filter at every pump inlet.","At least one pump inlet requires a filter.","entailment"],
+    ["The maintenance manual was revised last week.","The manual was written by the safety team.","neutral"],
+    ["The rated operating pressure is exactly 100 kPa.","The rated operating pressure is exactly 120 kPa.","contradiction"],
+    ["A red truck is sitting in the depot.","A truck is in the depot.","entailment"],
+    ["The conveyor has a belt.","The conveyor is manufactured in Germany.","neutral"]
+  ]
+}

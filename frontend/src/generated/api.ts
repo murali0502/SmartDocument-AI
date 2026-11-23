@@ -174,10 +174,136 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/local/documents/{document_id}/nlp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Nlp Status */
+        get: operations["nlp_status_api_v1_workspaces_local_documents__document_id__nlp_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/local/documents/{document_id}/annotations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Annotations */
+        get: operations["annotations_api_v1_workspaces_local_documents__document_id__annotations_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/local/documents/{document_id}/chunks/{chunk_id}/annotation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Annotation */
+        get: operations["annotation_api_v1_workspaces_local_documents__document_id__chunks__chunk_id__annotation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/local/nlp/embeddings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Embeddings */
+        post: operations["embeddings_api_v1_workspaces_local_nlp_embeddings_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/local/nlp/inference": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Infer */
+        post: operations["infer_api_v1_workspaces_local_nlp_inference_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** Annotation */
+        Annotation: {
+            /**
+             * Chunk Id
+             * Format: uuid
+             */
+            chunk_id: string;
+            source: components["schemas"]["SourceSpan"];
+            /**
+             * Language
+             * @enum {string}
+             */
+            language: "en" | "und";
+            /** Method */
+            method: string;
+            /** Warnings */
+            warnings: string[];
+            /** Sentences */
+            sentences: components["schemas"]["TextSpan"][];
+            /** Tokens */
+            tokens: components["schemas"]["LinguisticToken"][];
+            /** Entities */
+            entities: components["schemas"]["NamedSpan"][];
+            /** Phrases */
+            phrases: components["schemas"]["NamedSpan"][];
+            /** Temporal */
+            temporal: components["schemas"]["TemporalSpan"][];
+            /** Relations */
+            relations: components["schemas"]["RelationCandidate"][];
+            /** Frames */
+            frames: components["schemas"]["PredicateFrame"][];
+            /** Coreferences */
+            coreferences: components["schemas"]["CoreferenceCandidate"][];
+        };
+        /** AnnotationPage */
+        AnnotationPage: {
+            /** Items */
+            items: components["schemas"]["Annotation"][];
+            /** Next Cursor */
+            next_cursor: number | null;
+        };
         /** Chunk */
         Chunk: {
             /**
@@ -247,6 +373,18 @@ export interface components {
             /** Overlap */
             overlap: components["schemas"]["Evidence"][];
         };
+        /** CoreferenceCandidate */
+        CoreferenceCandidate: {
+            mention: components["schemas"]["TextSpan"];
+            antecedent: components["schemas"]["TextSpan"] | null;
+            /** Alternatives */
+            alternatives: components["schemas"]["TextSpan"][];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "candidate" | "ambiguous" | "unresolved";
+        };
         /** DocumentJob */
         DocumentJob: {
             document: components["schemas"]["DocumentRecord"];
@@ -313,6 +451,35 @@ export interface components {
             /** Next Cursor */
             next_cursor: number | null;
         };
+        /** EmbeddingInput */
+        EmbeddingInput: {
+            /** Texts */
+            texts: string[];
+        };
+        /** EmbeddingItem */
+        EmbeddingItem: {
+            /** Vector */
+            vector: number[];
+            /** Truncated */
+            truncated: boolean;
+        };
+        /** EmbeddingOutput */
+        EmbeddingOutput: {
+            /**
+             * Model
+             * @default sentence-transformers/all-MiniLM-L6-v2
+             */
+            model: string;
+            /**
+             * Revision
+             * @default 1110a243fdf4706b3f48f1d95db1a4f5529b4d41
+             */
+            revision: string;
+            /** Dimensions */
+            dimensions: number;
+            /** Items */
+            items: components["schemas"]["EmbeddingItem"][];
+        };
         /** Evidence */
         Evidence: {
             source: components["schemas"]["SourceSpan"];
@@ -376,6 +543,20 @@ export interface components {
             /** Error Message */
             error_message: string | null;
         };
+        /** LinguisticToken */
+        LinguisticToken: {
+            span: components["schemas"]["TextSpan"];
+            /** Normalized */
+            normalized: string;
+            /** Lemma */
+            lemma?: string | null;
+            /** Pos */
+            pos?: string | null;
+            /** Dependency */
+            dependency?: string | null;
+            /** Head */
+            head?: number | null;
+        };
         /** Liveness */
         Liveness: {
             /**
@@ -384,6 +565,91 @@ export interface components {
              * @constant
              */
             status: "alive";
+        };
+        /** NamedSpan */
+        NamedSpan: {
+            span: components["schemas"]["TextSpan"];
+            /** Label */
+            label: string;
+            /** Method */
+            method: string;
+        };
+        /** NliInput */
+        NliInput: {
+            /** Pairs */
+            pairs: components["schemas"]["NliPair"][];
+        };
+        /** NliItem */
+        NliItem: {
+            /**
+             * Label
+             * @enum {string}
+             */
+            label: "entailment" | "contradiction" | "neutral";
+            /** Scores */
+            scores: {
+                [key: string]: number;
+            };
+            /** Truncated */
+            truncated: boolean;
+        };
+        /** NliOutput */
+        NliOutput: {
+            /**
+             * Model
+             * @default cross-encoder/nli-MiniLM2-L6-H768
+             */
+            model: string;
+            /**
+             * Revision
+             * @default b95119ce93d3e065de6214e38cd4a97b0f2f2c6d
+             */
+            revision: string;
+            /** Items */
+            items: components["schemas"]["NliItem"][];
+        };
+        /** NliPair */
+        NliPair: {
+            /** Premise */
+            premise: string;
+            /** Hypothesis */
+            hypothesis: string;
+        };
+        /** NlpStatus */
+        NlpStatus: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "ready" | "failed" | "unavailable";
+            /** Method */
+            method: string;
+            /**
+             * Version
+             * @default nlp-v1
+             */
+            version: string;
+            /**
+             * Annotation Count
+             * @default 0
+             */
+            annotation_count: number;
+            /** Completed At */
+            completed_at?: string | null;
+            /** Error Code */
+            error_code?: string | null;
+        };
+        /** PredicateFrame */
+        PredicateFrame: {
+            predicate: components["schemas"]["TextSpan"];
+            /** Arguments */
+            arguments: components["schemas"]["Role"][];
+            /** Negated */
+            negated: boolean;
+            /** Modality */
+            modality: string | null;
+            /** Method */
+            method: string;
         };
         /** Readiness */
         Readiness: {
@@ -402,6 +668,30 @@ export interface components {
              * Format: date-time
              */
             checked_at: string;
+        };
+        /** RelationCandidate */
+        RelationCandidate: {
+            subject: components["schemas"]["TextSpan"];
+            predicate: components["schemas"]["TextSpan"];
+            object: components["schemas"]["TextSpan"];
+            evidence: components["schemas"]["TextSpan"];
+            /** Type */
+            type: string;
+            /** Negated */
+            negated: boolean;
+            /** Modality */
+            modality: string | null;
+            /**
+             * Method
+             * @enum {string}
+             */
+            method: "lexical-pattern" | "dependency-pattern";
+        };
+        /** Role */
+        Role: {
+            /** Label */
+            label: string;
+            span: components["schemas"]["TextSpan"];
         };
         /** SectionRef */
         SectionRef: {
@@ -476,6 +766,26 @@ export interface components {
             chunk_count: number;
             /** Error Code */
             error_code?: string | null;
+        };
+        /** TemporalSpan */
+        TemporalSpan: {
+            span: components["schemas"]["TextSpan"];
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "date" | "time" | "relative";
+            /** Normalized */
+            normalized: string | null;
+        };
+        /** TextSpan */
+        TextSpan: {
+            /** Start */
+            start: number;
+            /** End */
+            end: number;
+            /** Text */
+            text: string;
         };
         /** UploadReceipt */
         UploadReceipt: {
@@ -814,6 +1124,175 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChunkSource"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    nlp_status_api_v1_workspaces_local_documents__document_id__nlp_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NlpStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    annotations_api_v1_workspaces_local_documents__document_id__annotations_get: {
+        parameters: {
+            query?: {
+                after?: number;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnnotationPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    annotation_api_v1_workspaces_local_documents__document_id__chunks__chunk_id__annotation_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+                chunk_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Annotation"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    embeddings_api_v1_workspaces_local_nlp_embeddings_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Must be 1. */
+                "X-SmartDoc-Local"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmbeddingInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmbeddingOutput"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    infer_api_v1_workspaces_local_nlp_inference_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Must be 1. */
+                "X-SmartDoc-Local"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NliInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NliOutput"];
                 };
             };
             /** @description Validation Error */

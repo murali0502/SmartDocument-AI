@@ -117,6 +117,9 @@ async def ingestion_error(request: Request, error: ExtractionError) -> Response:
         "structure_pending": 409,
         "structure_failed": 409,
         "invalid_provenance": 409,
+        "nlp_pending": 409,
+        "nlp_failed": 409,
+        "model_unavailable": 503,
     }.get(error.code, 400)
     return problem(request, status, error.code, str(error))
 

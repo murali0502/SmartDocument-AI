@@ -72,3 +72,24 @@ $chunk = $page.items[0]
 Invoke-RestMethod -Uri "$document/chunks/$($chunk.id)/source" |
   ConvertTo-Json -Depth 12
 ```
+
+## Linguistic annotations
+
+The default rules profile starts automatically after structure is ready. The following paths are relative to `/api/v1/workspaces/local/documents/{document_id}`.
+
+| Method and path | Behavior |
+|---|---|
+| `GET /nlp` | Returns pending, ready, failed, or unavailable, with method and annotation count. |
+| `GET /annotations?limit=25&after=0` | Lists chunks' annotations in ordinal order. Use `next_cursor` when present. |
+| `GET /chunks/{chunk_id}/annotation` | Returns the annotation for one chunk of the current document and profile. |
+
+A pending build returns HTTP 409 from the annotation routes. A missing configured model returns HTTP 503. Offsets are relative to the extraction field specified by `source`. The returned token array provides indices for dependency heads.
+
+Install the optional models as described in the [NLP guide](NLP_PIPELINE.md) to use the two local inference endpoints below. Send JSON with `X-SmartDoc-Local: 1`.
+
+| Method and path under the local workspace | JSON input | Result |
+|---|---|---|
+| `POST /nlp/embeddings` | `{"texts":["An example sentence."]}` | Model revision and a normalized vector and truncation flag per input. Accepts up to 12 texts. |
+| `POST /nlp/inference` | `{"pairs":[{"premise":"The valve is open.","hypothesis":"The valve is closed."}]}` | Three-way prediction, scores and truncation flag per pair. Accepts up to 8 pairs. |
+
+These endpoints run on the local CPU. They do not retrieve documents or send text to an external service.

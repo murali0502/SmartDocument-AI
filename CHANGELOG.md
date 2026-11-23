@@ -1,5 +1,11 @@
 # Changelog
 
+## Phase 4 — Linguistic annotations
+
+- Added durable, source-anchored lexical and optional trained English annotations.
+- Added opt-in CPU embeddings and three-way NLI using pinned local ONNX artifacts.
+- Added annotation APIs, migration and model tests, and a reproducible feasibility dataset.
+
 ## Phase 3 — Document structure and chunks
 
 - Added stable structural nodes, page and section locators, and format-aware table and list hierarchy.

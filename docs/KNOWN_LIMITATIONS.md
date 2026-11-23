@@ -6,3 +6,5 @@
 - Source offsets address immutable extracted fields. PDF typography and Markdown and HTML syntax supply structural hints where available. PDF reading order and heading inference are heuristic. DOCX footnotes remain in the original file, and HTML extraction supports common flat tables. Saved Phase 2 results use the metadata they already contain.
 - Identical bytes reuse one document and job in the local workspace. User-triggered retries, version management, deletion and orphaned-blob cleanup are future work.
 - The built-in ingestion routes are loopback-only for the development profile. Sign-in, tenant authorization and production deployment are pending. Windows and browsers beyond Chromium remain unverified.
+
+- Phase 4 linguistic rules target English and its relation and coreference outputs are limited candidates. The optional model evaluation uses a small fixture. Language coverage, production calibration and model support outside the tested Linux AVX2 environment remain unverified.

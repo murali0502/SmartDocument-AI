@@ -8,4 +8,6 @@ Phase 2 exercises upload, claiming, subprocess extraction and persistence on ind
 
 Phase 3 covers Unicode and CRLF spans, fragment boundaries and overlap, hierarchy, table cell anchors, and separate OCR and slide fields. Integration checks migrate a populated Phase 2 database, build a snapshot, verify source ranges after restart, and reject mismatched evidence.
 
+Phase 4 tests exact linguistic spans, preservation of negation and modality, conservative coreference, Phase 3 upgrade and batch resume, and explicit unavailable-model behavior. The optional integration test uses the pinned local models when `SMARTDOC_TEST_MODEL_DIR` is set and `--extra nlp` is active. The default CI suite uses the download-free profile.
+
 Later phases add viewer geometry round trips, NLP and NCM annotations, ranked retrieval benchmarks, authorization tests, and the full upload-to-source workflow. The [roadmap](DEVELOPMENT_ROADMAP.md) tracks their exit conditions.
