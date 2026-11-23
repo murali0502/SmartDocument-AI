@@ -80,17 +80,22 @@ def job_record(value: IngestionJob) -> JobRecord:
 
 
 def require_local(request: Request) -> None:
-    try:
-        host = urlsplit(f"//{request.headers.get('host', '')}")
-        valid_host = not host.username and host.hostname in {"127.0.0.1", "localhost", "::1"}
-        valid_peer = request.client is not None and ip_address(request.client.host).is_loopback
-    except ValueError:
-        valid_host = valid_peer = False
-    origin = request.headers.get("origin")
-    if not valid_host or not valid_peer or (origin and origin != str(request.base_url).rstrip("/")):
-        raise ExtractionError(
-            "local_access_only", "Document ingestion is available only to the local workspace."
-        )
+    if not getattr(request.state, "hosted_workspace_authenticated", False):
+        try:
+            host = urlsplit(f"//{request.headers.get('host', '')}")
+            valid_host = not host.username and host.hostname in {"127.0.0.1", "localhost", "::1"}
+            valid_peer = request.client is not None and ip_address(request.client.host).is_loopback
+        except ValueError:
+            valid_host = valid_peer = False
+        origin = request.headers.get("origin")
+        if (
+            not valid_host
+            or not valid_peer
+            or (origin and origin != str(request.base_url).rstrip("/"))
+        ):
+            raise ExtractionError(
+                "local_access_only", "Document ingestion is available only to the local workspace."
+            )
     if request.app.state.database_readiness.check() != "ready":
         raise ExtractionError(
             "database_not_ready", "Apply the database migrations before using ingestion."

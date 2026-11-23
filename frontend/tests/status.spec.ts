@@ -37,9 +37,10 @@ test("reports real API and SQLite state and refreshes after migration", async ({
   expect(hasOverflow).toBe(false)
   await page.screenshot({ path: info.outputPath("status-mobile.png") })
 
-  const schemaResponse = page.waitForResponse((response) => response.url().endsWith("/openapi.json"))
-  await page.getByRole("link", { name: "OpenAPI schema" }).click()
-  await expect(page).toHaveURL(/\/api\/v1\/openapi\.json$/)
-  expect((await (await schemaResponse).json()).info.title).toBe("SmartDoc AI")
+  await expect(page.getByRole("link", { name: "API workspace" })).toHaveAttribute(
+    "href", "/api/v1/docs",
+  )
+  const schema = await page.request.get("/api/v1/openapi.json")
+  expect((await schema.json()).info.title).toBe("SmartDoc AI")
   expect(pageErrors).toEqual([])
 })

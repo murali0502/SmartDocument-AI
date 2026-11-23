@@ -14,7 +14,7 @@ export function App() {
               <span>Next Concept Modelling</span>
             </div>
           </div>
-          <a className="text-link" href="/api/v1/openapi.json">OpenAPI schema</a>
+          <a className="text-link" href="/api/v1/docs">API workspace</a>
         </div>
       </header>
       <main className="layout main">

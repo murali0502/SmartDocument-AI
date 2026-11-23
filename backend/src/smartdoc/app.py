@@ -35,7 +35,9 @@ from smartdoc.persistence.structure_store import StructureStore
 logger = logging.getLogger(__name__)
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
+def create_app(
+    settings: Settings | None = None, *, docs_url: str | None = "/api/v1/docs"
+) -> FastAPI:
     settings = settings or Settings()
     path = settings.database_path.resolve()
     engine = create_database_engine(path, read_only=True)
@@ -81,7 +83,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(
         title="SmartDoc AI",
         version=version("smartdoc-ai"),
-        docs_url="/api/v1/docs",
+        docs_url=docs_url,
         openapi_url="/api/v1/openapi.json",
         redoc_url=None,
         lifespan=lifespan,

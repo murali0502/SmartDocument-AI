@@ -48,6 +48,12 @@ Open http://127.0.0.1:5173. The status screen checks the API and SQLite schema o
 
 The backend listens on `127.0.0.1:8000` by default. The frontend forwards same-origin API requests to that backend.
 
+## Hosted deployment
+
+The root `Dockerfile` packages the browser and API together. Deploy one instance behind HTTPS and mount a persistent volume at `/data`. Set `SMARTDOC_HOSTED_PASSWORD` to a randomly generated password of at least 24 ASCII characters. Sign in as `smartdoc` and select **API workspace** to upload documents and explore results. Railway can use `/api/v1/health/ready` as its health check. The container applies database migrations on startup.
+
+The hosted app uses a single shared workspace. Anyone with the password can access its documents and results. The volume stores the SQLite database and original uploads. Keep the same volume across deployments and back it up separately.
+
 ## Ingest a document
 
 Use the [ingestion API guide](docs/API_DOCUMENTATION.md#document-ingestion) to upload a file, check its job, and fetch the extraction. The API starts a local ingestion worker automatically. Install Tesseract with English language data to process scanned PDFs and images. Native documents use their format-specific parsers.
