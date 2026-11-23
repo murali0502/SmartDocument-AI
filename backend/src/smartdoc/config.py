@@ -4,6 +4,7 @@ from typing import Literal
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from smartdoc.ncm.contracts import Weights
 from smartdoc.nlp.assets import DEFAULT_MODELS
 from smartdoc.nlp.pipeline import Profile
 
@@ -25,6 +26,7 @@ class Settings(BaseSettings):
     nlp_profile: Profile = "rules"
     nlp_model_dir: Path = DEFAULT_MODELS
     nlp_terms: dict[str, list[str]] = Field(default_factory=dict)
+    ncm_weights: Weights = Field(default_factory=Weights)
     host: str = "127.0.0.1"
     port: int = Field(default=8000, ge=1, le=65535)
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"

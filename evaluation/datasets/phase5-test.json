@@ -1,0 +1,46 @@
+{
+  "description": "Small manually annotated technical-document fixtures. Names are scored separately from their senses. Intended for engineering evaluation.",
+  "examples": [
+    {
+      "text": "# Compressor Assembly\n\nThe compressor requires a pressure valve. The pressure valve is part of the Compressor Assembly.",
+      "concepts": ["compressor assembly", "compressor", "pressure valve"],
+      "relations": [["compressor","REQUIRES","pressure valve",false],["pressure valve","PART_OF","compressor assembly",false]],
+      "aliases": [], "ambiguous": []
+    },
+    {
+      "text": "A Digital Signal Processor (DSP) is installed. The DSP uses a clock oscillator.",
+      "concepts": ["digital signal processor", "clock oscillator"],
+      "relations": [["digital signal processor","USES","clock oscillator",false]],
+      "aliases": [["dsp","digital signal processor"]], "ambiguous": []
+    },
+    {
+      "text": "# Control Loop\n\nA Control Loop (CL) is deployed.\n\n# Cable Loom\n\nA Cable Loom (CL) is installed. The CL requires a protective sleeve.",
+      "concepts": ["control loop", "cable loom", "cl", "protective sleeve"],
+      "relations": [], "aliases": [], "ambiguous": ["cl"]
+    },
+    {
+      "text": "An optical sensor does not require a fluid line. The sensor may use a backup battery.",
+      "concepts": ["optical sensor", "fluid line", "sensor", "backup battery"],
+      "relations": [["optical sensor","REQUIRES","fluid line",true],["sensor","USES","backup battery",false]],
+      "aliases": [], "ambiguous": []
+    },
+    {
+      "text": "A manifold means a fluid junction. The manifold is a type of distribution component.",
+      "concepts": ["manifold", "fluid junction", "distribution component"],
+      "relations": [["manifold","DEFINED_BY","fluid junction",false],["manifold","IS_A","distribution component",false]],
+      "aliases": [], "ambiguous": []
+    },
+    {
+      "text": "The rotary actuator has a motor. The motor rests next to the actuator.",
+      "concepts": ["rotary actuator", "motor", "actuator"],
+      "relations": [["rotary actuator","HAS_PART","motor",false]],
+      "aliases": [], "ambiguous": []
+    },
+    {
+      "text": "The baseline gauge is now called the reference gauge. The reference gauge measures circuit pressure.",
+      "concepts": ["reference gauge", "circuit pressure"],
+      "relations": [["reference gauge","MEASURES","circuit pressure",false]],
+      "aliases": [["baseline gauge","reference gauge"]], "ambiguous": []
+    }
+  ]
+}

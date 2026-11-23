@@ -13,6 +13,7 @@ The setup uses `uv.lock` and `package-lock.json`. Run the API and Alembic from t
 | `SMARTDOC_NLP_PROFILE` | `rules`. Use `spacy` with the optional runtime and English model installed. |
 | `SMARTDOC_NLP_MODEL_DIR` | `.local/nlp-models` relative to the backend working directory |
 | `SMARTDOC_NLP_TERMS` | `{}`. JSON mapping domain entity labels to literal terms. |
+| `SMARTDOC_NCM_WEIGHTS` | Optional JSON overrides for definition, heading, relation, entity and frequency scores |
 | `SMARTDOC_HOST` | `127.0.0.1` |
 | `SMARTDOC_PORT` | `8000` |
 | `SMARTDOC_LOG_LEVEL` | `INFO` |

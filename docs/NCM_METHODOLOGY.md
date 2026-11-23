@@ -1,6 +1,6 @@
 # Next Concept Modelling methodology
 
-Status: proposed methodology with untested project-specific hypotheses.
+Phase 5 implements the local concept methodology described below. Broader graph and reasoning hypotheses remain subject to evaluation.
 
 For immutable document version v and extraction run r, define source T(v,r,u) for source unit u. An evidence anchor e=(v,r,u,s,t) is valid iff 0 ≤ s < t ≤ length(T) and excerpt=T[s:t]. Use half-open Unicode code point offsets and preserve source format locators. A relation assertion records subject, predicate, object, one or more anchors, qualifiers, extraction method and version, raw score, validation state and creation time. A derivation references asserted edges, a rule and applicable qualifiers.
 
@@ -11,3 +11,27 @@ Normalize inverse relationship labels using documented directional rules and ret
 The question planner returns intent, candidate concepts, scope, quantity/date constraints and optional clarification. Answer direct and explanatory questions with extractive evidence, relationship questions with typed paths, comparisons with aligned rows, numerical questions with operands and unit-checked formulas, timeline questions with source-dated changes, and summaries with source-backed ranked passages. Separate quote and locator validation from claim-support checks. Ambiguity yields clarification, insufficient support yields abstention, and opposing qualified assertions can be displayed as conflicting evidence with their contexts. Dates must be sourced, with upload order labeled separately.
 
 Established components include linguistic tagging, BM25, embeddings, rank fusion, MMR, NLI and graph algorithms. The SmartDoc methodology is their versioned orchestration around immutable anchors, guarded canonicalization, relation validation and typed derivations. Test the hypothesis that guarded alias resolution reduces false merges and that graph-assisted retrieval improves multi-hop evidence recall at controlled citation precision. Use ablations for scoring features, normalization, encoders, graph retrieval and reranking. Treat model-assisted extraction, NLI and broad coreference as experiments until they pass their gates.
+
+## Phase 5 implementation
+
+The worker materializes one initial NCM snapshot for each ready local document and active NLP and scoring configuration. Inputs are the immutable extraction, its primary chunks and the saved annotations. Each accepted mention, alias claim and assertion carries its document, extraction job, chunk, field, exact Unicode range, and available physical locator. The worker reopens the saved source field to verify the anchor. It reconstructs Phase 4's lexical relation candidates before publishing them. Phase 5 also recognizes a limited set of explicit taxonomy, component, implementation, derivation and temporal-order patterns.
+
+### Candidate identity and scoring
+
+Headings, list items, text cells, captions, named entities, noun phrases and relationship endpoints can produce mentions. Identity is scoped to a document. Normalize Unicode, case, whitespace and dash variants, preserving the original mention. Different known entity types and distinct section definitions can keep the same spelling in separate senses. When a sense remains unresolved, its relationship candidates require review. An explicit acronym, alias or rename may resolve a single compatible target. Multiple expansions, chained aliases or incompatible scopes stay separate and produce review records. Lemmas and close lexical forms in shared context can suggest duplicates for review. They never merge concepts automatically.
+
+Score contributions are inspectable. The baseline gives a definition the greatest weight (3), followed by a heading or connected source-validated assertion (2 each), and a named entity (1). Frequency contributes the base-2 logarithm of one plus the distinct evidence count, capped at 3, times its weight. These are prioritization defaults that favor explicit definitional and structural evidence, with configurable weights. They are not probabilities or fitted optimal parameters.
+
+### Assertions and dependencies
+
+`source_validated` means the source span and deterministic relation pattern agree. `needs_review` records unresolved identities. `conflicted` means opposing polarity was found for the same typed pair and modality. `rejected` is an explicit review outcome. These states describe extraction and evidence checks. Production-level inference and conflict adjudication come later.
+
+Section membership and semantic hierarchy links are distinct. A concept may have several parents. Prerequisite and impact traversal use only source-validated, non-negated `REQUIRES` and `DEPENDS_ON` edges with no modality or explicit necessity. Results include a shortest evidenced path, depth and any reachable SCC cycles within the searched subgraph. Traversal allows up to eight hops and 200 paths. Truncation is reported.
+
+### Revisions and comparison
+
+Snapshots are immutable. A local reviewer can merge two IDs, reject an assertion, rebuild from the saved annotations, or restore an earlier revision. Successful edits create a new revision with a reason and parent ID. Concurrent edits require the expected head revision. Restoring preserves the intermediate history. All assertions retain the original source evidence even when a review remaps their endpoints.
+
+Compare two document snapshots, or two revisions of one document. Cross-document matching requires a unique compatible label or a source-attested rename. Changes may include two-sided definitions and aliases, explicit deprecation, and a reviewed merge within a document. Unmatched concepts are shown as present on one side. Review rationale is user input and is separate from documentary evidence. The caller can supply declared revision order. The system makes no chronological inference from upload or processing timestamps.
+
+The [Phase 5 report](../PROJECT_STATUS.md#phase-5-implementation-report) records the measured fixture results. Phase 6 will project evidence into a broader, versioned knowledge graph.

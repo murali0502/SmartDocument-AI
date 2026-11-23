@@ -60,6 +60,10 @@ The worker builds paginated structural elements and chunks after extraction. The
 
 Phase 4 automatically annotates structured chunks with the standard rules profile. The [NLP pipeline guide](docs/NLP_PIPELINE.md) explains the optional CPU models and [annotation routes](docs/API_DOCUMENTATION.md#linguistic-annotations).
 
+## Inspect concepts and dependencies
+
+Phase 5 builds concepts, aliases, hierarchy links and evidence-backed relationship candidates from completed NLP annotations. The [NCM API guide](docs/API_DOCUMENTATION.md#next-concept-modelling) covers snapshots, dependencies, revisions and comparisons.
+
 ## Develop and verify
 
 ```sh

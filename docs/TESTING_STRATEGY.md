@@ -10,4 +10,6 @@ Phase 3 covers Unicode and CRLF spans, fragment boundaries and overlap, hierarch
 
 Phase 4 tests exact linguistic spans, preservation of negation and modality, conservative coreference, Phase 3 upgrade and batch resume, and explicit unavailable-model behavior. The optional integration test uses the pinned local models when `SMARTDOC_TEST_MODEL_DIR` is set and `--extra nlp` is active. The default CI suite uses the download-free profile.
 
+Phase 5 tests exact concept and relationship anchors, ambiguous aliases and scoped definitions, negative and conflicting claims, dependency cycles and impact, score overrides, review history, rebuild, and backfill. `scripts/eval_ncm.py` reports precision, recall, F1 and evidence round trips on the independent small Phase 5 fixture.
+
 Later phases add viewer geometry round trips, NLP and NCM annotations, ranked retrieval benchmarks, authorization tests, and the full upload-to-source workflow. The [roadmap](DEVELOPMENT_ROADMAP.md) tracks their exit conditions.

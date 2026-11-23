@@ -1,5 +1,11 @@
 # Changelog
 
+## Phase 5 — NCM core
+
+- Added source-verified concepts, conservative aliases, scoring, assertions and hierarchy.
+- Added dependency and impact traversal with cited edges and cycle detection.
+- Added immutable review revisions, evidence-backed snapshot comparison and a dedicated evaluation fixture.
+
 ## Phase 4 — Linguistic annotations
 
 - Added durable, source-anchored lexical and optional trained English annotations.

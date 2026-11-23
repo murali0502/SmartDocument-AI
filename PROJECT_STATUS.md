@@ -1,6 +1,6 @@
 # SmartDoc AI project status
 
-Updated 23 November 2026. The Phase 0 architecture is approved. Phases 1 through 4 are implemented and verified on Linux. Phase 5 is pending.
+Updated 23 November 2026. The Phase 0 architecture is approved. Phases 1 through 5 are implemented and verified on Linux. Phase 6 is pending.
 
 ## Phase 1 implementation report
 
@@ -131,3 +131,43 @@ The model endpoints require the local workspace and explicit request header, and
 ### Incomplete and upcoming
 
 Cross-chunk coreference, broad multilingual analysis, calibrated confidence, larger benchmarks, Windows execution, and optional model support outside the tested Linux CPU remain unverified. Phase 5 should use the annotated spans to build versioned, evidence-grounded concept and relationship candidates with conservative alias resolution.
+
+## Phase 5 implementation report
+
+### Features and decisions
+
+- Added exact-anchor concept and assertion extraction, document-scoped canonicalization, explicit aliases, unresolved senses and lexical duplicate suggestions. Lexical similarity produces review suggestions.
+- Added configurable scoring with per-feature contributions, structural and semantic hierarchy links, and bounded prerequisites, impact and cycle analysis.
+- Added versioned NCM snapshots and audited local merge, reject, rebuild and restore actions. Comparisons link each side to its source and use user-declared ordering only when given.
+- Added read and review APIs and a background build step for existing NLP results.
+
+### Files and dependencies
+
+Created `backend/migrations/versions/0005_ncm_snapshots.py`, the NCM modelling, scoring, acquisition, comparison and dependency modules, the snapshot store and API, and `backend/tests/test_ncm.py`. Added `scripts/eval_ncm.py` and `evaluation/datasets/phase5-test.json`. Updated the application worker, migration registration, configuration, generated API types, README, changelog, and methodology, data, API and testing docs. This phase adds no dependencies or model downloads.
+
+### Commands and observed results
+
+| Check | Commands or workflow | Result |
+|---|---|---|
+| Backend | `uv sync --locked`, Ruff lint and format, and `uv run --frozen pytest -q` | 59 passed and the existing optional-model test skipped. With the models enabled, all 60 tests passed. |
+| Schema and revisions | Alembic upgrade of a populated Phase 4 database, `alembic check` and review API tests | Backfilled existing NLP results, rejected stale edits, preserved older revisions and restored a prior revision. No schema drift. |
+| Live API | Uvicorn upload, NCM status, assertions, dependencies, comparison and restart | Three assertion excerpts matched the extraction fields. Two dependency paths and both sides of a changed definition were verified. The snapshot survived restart. |
+| Frontend | OpenAPI export, contract generation, TypeScript/Vite build and Playwright | Passed. |
+| NCM evaluation | `uv run --project backend --frozen python scripts/eval_ncm.py` and optional spaCy evaluation | Both independently checked all emitted evidence anchors against the original extraction fields. |
+
+### Evaluation and performance observations
+
+The seven hand-labeled documents contain 21 concept names, nine relations, two accepted alias pairs, and one ambiguous acronym. The names metric does not score fine-grained senses.
+
+| Profile | Concept F1 | Relation F1 | Verified anchors | Accepted aliases | Ambiguity found |
+|---|---:|---:|---:|---:|---:|
+| Rules | 0.923 | 0.941 | 77 | 2/2 | 1/1 |
+| Optional spaCy | 0.955 | 0.875 | 119 | 2/2 | 1/1 |
+
+Rules found 18 of 21 concepts and 8 of 9 relations with no extra predictions in those categories. The spaCy profile found all 21 concept names, added two extras, and found 7 of 9 relations. This is a small feasibility fixture. Rules took about 11 ms for all seven local examples. The spaCy run took about 974 ms including model loading. Neither figure includes file ingestion or HTTP latency.
+
+### Security and remaining work
+
+NCM reads and review mutations are limited to the local workspace. The review header and expected revision are mandatory. The worker verifies exact extraction spans and reconstructs the relation pattern before accepting Phase 4 proposals. Tests include a fabricated relation candidate and a changed source string.
+
+The relation rules and alias patterns remain limited. Cross-document alignment is conservative. Source publication dates, broader authority and contradiction adjudication, and collection graph storage remain later work. Windows execution remains unverified. Phase 6 should build the versioned knowledge graph from NCM evidence.

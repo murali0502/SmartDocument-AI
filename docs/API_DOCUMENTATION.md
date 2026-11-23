@@ -93,3 +93,21 @@ Install the optional models as described in the [NLP guide](NLP_PIPELINE.md) to 
 | `POST /nlp/inference` | `{"pairs":[{"premise":"The valve is open.","hypothesis":"The valve is closed."}]}` | Three-way prediction, scores and truncation flag per pair. Accepts up to 8 pairs. |
 
 These endpoints run on the local CPU. They do not retrieve documents or send text to an external service.
+
+## Next Concept Modelling
+
+The worker schedules a snapshot after NLP is ready. These routes are relative to `/api/v1/workspaces/local/documents/{document_id}/ncm`.
+
+| Method and path | Purpose |
+|---|---|
+| `GET` on the `/ncm` path itself | Read latest status, snapshot revision and counts. |
+| `GET /concepts` or `/concepts/{concept_id}` | Read ranked concepts, mentions, aliases, definitions and score contributions. |
+| `GET /assertions` and `GET /hierarchy` | Read typed assertions and hierarchy links with source evidence. |
+| `GET /alias-candidates` and `GET /duplicate-candidates` | Read unresolved alias and lexical suggestions for review. |
+| `GET /dependencies/{concept_id}?direction=prerequisites&depth=4` | Read bounded prerequisite chains, their assertion IDs and cycles. Use `direction=impact` for reverse traversal. |
+| `GET /revisions` | Read revision metadata and review history. |
+| `POST /revisions` | Publish an audited `merge`, `reject_assertion`, `rebuild` or `restore` revision. |
+
+List endpoints are paginated. Snapshot data endpoints accept `revision=...`. Revision writes require `X-SmartDoc-Local: 1`, a reason and `expected_revision`. A stale edit returns HTTP 409. Example merge input is `{"action":"merge","expected_revision":1,"reason":"Confirmed terminology in this manual","source":"source-uuid","target":"target-uuid"}`.
+
+Use `GET /api/v1/workspaces/local/ncm/compare?left=...&right=...` for evidence-backed differences. Supply optional left and right revision numbers. Chronology defaults to `unspecified`. `declared_left_before_right` records a caller-provided ordering. Every returned side retains its own anchors.

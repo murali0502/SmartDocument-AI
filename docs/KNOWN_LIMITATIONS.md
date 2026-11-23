@@ -8,3 +8,5 @@
 - The built-in ingestion routes are loopback-only for the development profile. Sign-in, tenant authorization and production deployment are pending. Windows and browsers beyond Chromium remain unverified.
 
 - Phase 4 linguistic rules target English and its relation and coreference outputs are limited candidates. The optional model evaluation uses a small fixture. Language coverage, production calibration and model support outside the tested Linux AVX2 environment remain unverified.
+
+- Phase 5 concept identities are document-scoped. Similarity only suggests review. Relation patterns cover a limited vocabulary. Comparisons preserve ambiguity and do not infer chronology from ingestion metadata. Phase 6 introduces the collection-level graph.

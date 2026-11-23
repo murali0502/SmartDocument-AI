@@ -259,10 +259,227 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/local/documents/{document_id}/ncm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Status */
+        get: operations["status_api_v1_workspaces_local_documents__document_id__ncm_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/local/documents/{document_id}/ncm/concepts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Concepts */
+        get: operations["concepts_api_v1_workspaces_local_documents__document_id__ncm_concepts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/local/documents/{document_id}/ncm/concepts/{concept_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Concept */
+        get: operations["concept_api_v1_workspaces_local_documents__document_id__ncm_concepts__concept_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/local/documents/{document_id}/ncm/assertions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Assertions */
+        get: operations["assertions_api_v1_workspaces_local_documents__document_id__ncm_assertions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/local/documents/{document_id}/ncm/hierarchy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Hierarchy */
+        get: operations["hierarchy_api_v1_workspaces_local_documents__document_id__ncm_hierarchy_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/local/documents/{document_id}/ncm/alias-candidates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Aliases */
+        get: operations["aliases_api_v1_workspaces_local_documents__document_id__ncm_alias_candidates_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/local/documents/{document_id}/ncm/duplicate-candidates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Duplicates */
+        get: operations["duplicates_api_v1_workspaces_local_documents__document_id__ncm_duplicate_candidates_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/local/documents/{document_id}/ncm/dependencies/{concept_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Dependencies */
+        get: operations["dependencies_api_v1_workspaces_local_documents__document_id__ncm_dependencies__concept_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/local/documents/{document_id}/ncm/revisions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Revisions */
+        get: operations["revisions_api_v1_workspaces_local_documents__document_id__ncm_revisions_get"];
+        put?: never;
+        /** Review */
+        post: operations["review_api_v1_workspaces_local_documents__document_id__ncm_revisions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/local/ncm/compare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Compare Documents */
+        get: operations["compare_documents_api_v1_workspaces_local_ncm_compare_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** Alias */
+        Alias: {
+            /** Surface */
+            surface: string;
+            /**
+             * Method
+             * @enum {string}
+             */
+            method: "acronym" | "explicit_alias" | "explicit_rename" | "review";
+            /** Evidence */
+            evidence: components["schemas"]["Anchor"][];
+        };
+        /** AliasReview */
+        AliasReview: {
+            /** Surface */
+            surface: string;
+            /** Alternatives */
+            alternatives: string[];
+            /** Evidence */
+            evidence: components["schemas"]["Anchor"][];
+        };
+        /** Anchor */
+        Anchor: {
+            /**
+             * Document Id
+             * Format: uuid
+             */
+            document_id: string;
+            /**
+             * Extraction Job Id
+             * Format: uuid
+             */
+            extraction_job_id: string;
+            /**
+             * Chunk Id
+             * Format: uuid
+             */
+            chunk_id: string;
+            source: components["schemas"]["SourceSpan"];
+            /** Locator */
+            locator: {
+                [key: string]: number | string;
+            };
+            /** Text */
+            text: string;
+        };
         /** Annotation */
         Annotation: {
             /**
@@ -303,6 +520,74 @@ export interface components {
             items: components["schemas"]["Annotation"][];
             /** Next Cursor */
             next_cursor: number | null;
+        };
+        /** Assertion */
+        Assertion: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Subject Id
+             * Format: uuid
+             */
+            subject_id: string;
+            /**
+             * Object Id
+             * Format: uuid
+             */
+            object_id: string;
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "IS_A" | "PART_OF" | "HAS_PART" | "DEPENDS_ON" | "REQUIRES" | "CAUSED_BY" | "LEADS_TO" | "IMPLEMENTS" | "USES" | "PRODUCES" | "MEASURES" | "COMPARED_WITH" | "CONTRADICTS" | "SUPPORTS" | "DEFINED_BY" | "DERIVED_FROM" | "ASSOCIATED_WITH" | "PRECEDES" | "FOLLOWS" | "INSTANCE_OF" | "HAS_ATTRIBUTE";
+            subject: components["schemas"]["Anchor"];
+            object: components["schemas"]["Anchor"];
+            predicate: components["schemas"]["Anchor"];
+            evidence: components["schemas"]["Anchor"];
+            /** Negated */
+            negated: boolean;
+            /** Modality */
+            modality: string | null;
+            /** Method */
+            method: string;
+            /**
+             * Validation
+             * @enum {string}
+             */
+            validation: "source_validated" | "needs_review" | "conflicted" | "rejected";
+            /**
+             * Confidence
+             * @enum {string}
+             */
+            confidence: "direct_pattern" | "dependency_supported";
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** Change */
+        Change: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "only_left" | "only_right" | "renamed" | "merged" | "definitions_changed" | "aliases_changed" | "lifecycle_changed";
+            /** Left Id */
+            left_id: string | null;
+            /** Right Id */
+            right_id: string | null;
+            /** Left Label */
+            left_label: string | null;
+            /** Right Label */
+            right_label: string | null;
+            /** Left Evidence */
+            left_evidence: components["schemas"]["Anchor"][];
+            /** Right Evidence */
+            right_evidence: components["schemas"]["Anchor"][];
         };
         /** Chunk */
         Chunk: {
@@ -373,6 +658,51 @@ export interface components {
             /** Overlap */
             overlap: components["schemas"]["Evidence"][];
         };
+        /** Comparison */
+        Comparison: {
+            /**
+             * Chronology
+             * @enum {string}
+             */
+            chronology: "unspecified" | "declared_left_before_right";
+            left_revision: components["schemas"]["SnapshotStatus"];
+            right_revision: components["schemas"]["SnapshotStatus"];
+            changes: components["schemas"]["Page_Change_"];
+        };
+        /** Concept */
+        Concept: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Label */
+            label: string;
+            /** Normalized */
+            normalized: string;
+            /** Category */
+            category: string;
+            /** Sense */
+            sense: string | null;
+            score: components["schemas"]["ConceptScore"];
+            /** Mentions */
+            mentions: components["schemas"]["Mention"][];
+            /** Aliases */
+            aliases?: components["schemas"]["Alias"][];
+            /** Definitions */
+            definitions?: components["schemas"]["Definition"][];
+            /** Deprecation */
+            deprecation?: components["schemas"]["Anchor"][];
+        };
+        /** ConceptScore */
+        ConceptScore: {
+            /** Total */
+            total: number;
+            /** Features */
+            features: {
+                [key: string]: number;
+            };
+        };
         /** CoreferenceCandidate */
         CoreferenceCandidate: {
             mention: components["schemas"]["TextSpan"];
@@ -384,6 +714,46 @@ export interface components {
              * @enum {string}
              */
             status: "candidate" | "ambiguous" | "unresolved";
+        };
+        /** Definition */
+        Definition: {
+            quote: components["schemas"]["Anchor"];
+            expression: components["schemas"]["Anchor"];
+            /**
+             * Qualified
+             * @default false
+             */
+            qualified: boolean;
+        };
+        /** DependencyCycle */
+        DependencyCycle: {
+            /** Concepts */
+            concepts: string[];
+            /** Assertions */
+            assertions: string[];
+        };
+        /** DependencyPath */
+        DependencyPath: {
+            /** Concept Ids */
+            concept_ids: string[];
+            /** Assertion Ids */
+            assertion_ids: string[];
+            /** Depth */
+            depth: number;
+        };
+        /** DependencyView */
+        DependencyView: {
+            /**
+             * Direction
+             * @enum {string}
+             */
+            direction: "prerequisites" | "impact";
+            /** Paths */
+            paths: components["schemas"]["DependencyPath"][];
+            /** Cycles */
+            cycles: components["schemas"]["DependencyCycle"][];
+            /** Truncated */
+            truncated: boolean;
         };
         /** DocumentJob */
         DocumentJob: {
@@ -417,6 +787,23 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** DuplicateSuggestion */
+        DuplicateSuggestion: {
+            /**
+             * Left Id
+             * Format: uuid
+             */
+            left_id: string;
+            /**
+             * Right Id
+             * Format: uuid
+             */
+            right_id: string;
+            /** Lexical Key */
+            lexical_key: string;
+            /** Evidence */
+            evidence: components["schemas"]["Anchor"][];
         };
         /** Element */
         Element: {
@@ -508,6 +895,28 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** Hierarchy */
+        Hierarchy: {
+            /**
+             * Child Id
+             * Format: uuid
+             */
+            child_id: string;
+            /**
+             * Parent Id
+             * Format: uuid
+             */
+            parent_id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "section" | "is_a" | "part_of" | "instance_of";
+            /** Evidence */
+            evidence: components["schemas"]["Anchor"][];
+            /** Assertion Id */
+            assertion_id?: string | null;
+        };
         /** JobRecord */
         JobRecord: {
             /**
@@ -565,6 +974,45 @@ export interface components {
              * @constant
              */
             status: "alive";
+        };
+        /** Mention */
+        Mention: {
+            evidence: components["schemas"]["Anchor"];
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "heading" | "table" | "list" | "caption" | "entity" | "phrase" | "relation" | "alias";
+            /** Label */
+            label?: string | null;
+            /** Lemma Form */
+            lemma_form?: string | null;
+            /** Section Id */
+            section_id?: string | null;
+            /** Parent Section Id */
+            parent_section_id?: string | null;
+        };
+        /** MergeRequest */
+        MergeRequest: {
+            /** Expected Revision */
+            expected_revision: number;
+            /** Reason */
+            reason: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            action: "merge";
+            /**
+             * Source
+             * Format: uuid
+             */
+            source: string;
+            /**
+             * Target
+             * Format: uuid
+             */
+            target: string;
         };
         /** NamedSpan */
         NamedSpan: {
@@ -639,6 +1087,55 @@ export interface components {
             /** Error Code */
             error_code?: string | null;
         };
+        /** Page[AliasReview] */
+        Page_AliasReview_: {
+            /** Items */
+            items: components["schemas"]["AliasReview"][];
+            /** Next Cursor */
+            next_cursor: number | null;
+        };
+        /** Page[Assertion] */
+        Page_Assertion_: {
+            /** Items */
+            items: components["schemas"]["Assertion"][];
+            /** Next Cursor */
+            next_cursor: number | null;
+        };
+        /** Page[Change] */
+        Page_Change_: {
+            /** Items */
+            items: components["schemas"]["Change"][];
+            /** Next Cursor */
+            next_cursor: number | null;
+        };
+        /** Page[Concept] */
+        Page_Concept_: {
+            /** Items */
+            items: components["schemas"]["Concept"][];
+            /** Next Cursor */
+            next_cursor: number | null;
+        };
+        /** Page[DuplicateSuggestion] */
+        Page_DuplicateSuggestion_: {
+            /** Items */
+            items: components["schemas"]["DuplicateSuggestion"][];
+            /** Next Cursor */
+            next_cursor: number | null;
+        };
+        /** Page[Hierarchy] */
+        Page_Hierarchy_: {
+            /** Items */
+            items: components["schemas"]["Hierarchy"][];
+            /** Next Cursor */
+            next_cursor: number | null;
+        };
+        /** Page[SnapshotStatus] */
+        Page_SnapshotStatus_: {
+            /** Items */
+            items: components["schemas"]["SnapshotStatus"][];
+            /** Next Cursor */
+            next_cursor: number | null;
+        };
         /** PredicateFrame */
         PredicateFrame: {
             predicate: components["schemas"]["TextSpan"];
@@ -669,6 +1166,35 @@ export interface components {
              */
             checked_at: string;
         };
+        /** RebuildRequest */
+        RebuildRequest: {
+            /** Expected Revision */
+            expected_revision: number;
+            /** Reason */
+            reason: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            action: "rebuild";
+        };
+        /** RejectRequest */
+        RejectRequest: {
+            /** Expected Revision */
+            expected_revision: number;
+            /** Reason */
+            reason: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            action: "reject_assertion";
+            /**
+             * Assertion Id
+             * Format: uuid
+             */
+            assertion_id: string;
+        };
         /** RelationCandidate */
         RelationCandidate: {
             subject: components["schemas"]["TextSpan"];
@@ -687,6 +1213,20 @@ export interface components {
              */
             method: "lexical-pattern" | "dependency-pattern";
         };
+        /** RestoreRequest */
+        RestoreRequest: {
+            /** Expected Revision */
+            expected_revision: number;
+            /** Reason */
+            reason: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            action: "restore";
+            /** Restore Revision */
+            restore_revision: number;
+        };
         /** Role */
         Role: {
             /** Label */
@@ -704,6 +1244,43 @@ export interface components {
             title: string;
             /** Level */
             level: number;
+        };
+        /** SnapshotStatus */
+        SnapshotStatus: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "ready" | "failed" | "unavailable";
+            /**
+             * Version
+             * @default ncm-v1
+             */
+            version: string;
+            /** Id */
+            id?: string | null;
+            /** Revision */
+            revision?: number | null;
+            /** Parent Id */
+            parent_id?: string | null;
+            /** Completed At */
+            completed_at?: string | null;
+            /**
+             * Concept Count
+             * @default 0
+             */
+            concept_count: number;
+            /**
+             * Assertion Count
+             * @default 0
+             */
+            assertion_count: number;
+            /** Error */
+            error?: string | null;
+            /** Audit */
+            audit?: {
+                [key: string]: unknown;
+            } | null;
         };
         /** SourceSpan */
         SourceSpan: {
@@ -1293,6 +1870,390 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["NliOutput"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    status_api_v1_workspaces_local_documents__document_id__ncm_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SnapshotStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    concepts_api_v1_workspaces_local_documents__document_id__ncm_concepts_get: {
+        parameters: {
+            query?: {
+                after?: number;
+                limit?: number;
+                revision?: number | null;
+            };
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_Concept_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    concept_api_v1_workspaces_local_documents__document_id__ncm_concepts__concept_id__get: {
+        parameters: {
+            query?: {
+                revision?: number | null;
+            };
+            header?: never;
+            path: {
+                document_id: string;
+                concept_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Concept"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assertions_api_v1_workspaces_local_documents__document_id__ncm_assertions_get: {
+        parameters: {
+            query?: {
+                after?: number;
+                limit?: number;
+                revision?: number | null;
+            };
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_Assertion_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    hierarchy_api_v1_workspaces_local_documents__document_id__ncm_hierarchy_get: {
+        parameters: {
+            query?: {
+                after?: number;
+                limit?: number;
+                revision?: number | null;
+            };
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_Hierarchy_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    aliases_api_v1_workspaces_local_documents__document_id__ncm_alias_candidates_get: {
+        parameters: {
+            query?: {
+                after?: number;
+                limit?: number;
+                revision?: number | null;
+            };
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_AliasReview_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    duplicates_api_v1_workspaces_local_documents__document_id__ncm_duplicate_candidates_get: {
+        parameters: {
+            query?: {
+                after?: number;
+                limit?: number;
+                revision?: number | null;
+            };
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_DuplicateSuggestion_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dependencies_api_v1_workspaces_local_documents__document_id__ncm_dependencies__concept_id__get: {
+        parameters: {
+            query?: {
+                direction?: "prerequisites" | "impact";
+                depth?: number;
+                revision?: number | null;
+            };
+            header?: never;
+            path: {
+                document_id: string;
+                concept_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DependencyView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revisions_api_v1_workspaces_local_documents__document_id__ncm_revisions_get: {
+        parameters: {
+            query?: {
+                after?: number;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_SnapshotStatus_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    review_api_v1_workspaces_local_documents__document_id__ncm_revisions_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-SmartDoc-Local"?: string | null;
+            };
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MergeRequest"] | components["schemas"]["RejectRequest"] | components["schemas"]["RestoreRequest"] | components["schemas"]["RebuildRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SnapshotStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    compare_documents_api_v1_workspaces_local_ncm_compare_get: {
+        parameters: {
+            query: {
+                left: string;
+                right: string;
+                chronology?: "unspecified" | "declared_left_before_right";
+                left_revision?: number | null;
+                right_revision?: number | null;
+                after?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Comparison"];
                 };
             };
             /** @description Validation Error */
