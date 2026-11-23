@@ -34,4 +34,4 @@ Snapshots are immutable. A local reviewer can merge two IDs, reject an assertion
 
 Compare two document snapshots, or two revisions of one document. Cross-document matching requires a unique compatible label or a source-attested rename. Changes may include two-sided definitions and aliases, explicit deprecation, and a reviewed merge within a document. Unmatched concepts are shown as present on one side. Review rationale is user input and is separate from documentary evidence. The caller can supply declared revision order. The system makes no chronological inference from upload or processing timestamps.
 
-The [Phase 5 report](../PROJECT_STATUS.md#phase-5-implementation-report) records the measured fixture results. Phase 6 will project evidence into a broader, versioned knowledge graph.
+The [Phase 5 report](../PROJECT_STATUS.md#phase-5-implementation-report) records the measured fixture results. Phase 6 projects the snapshots into the [versioned knowledge graph](KNOWLEDGE_GRAPH_DESIGN.md).

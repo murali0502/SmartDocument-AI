@@ -121,6 +121,10 @@ async def ingestion_error(request: Request, error: ExtractionError) -> Response:
         "nlp_failed": 409,
         "ncm_pending": 409,
         "ncm_failed": 409,
+        "graph_pending": 409,
+        "graph_failed": 409,
+        "graph_integrity": 409,
+        "graph_query_limit": 422,
         "revision_conflict": 409,
         "model_unavailable": 503,
     }.get(error.code, 400)

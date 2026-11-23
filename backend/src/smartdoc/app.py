@@ -12,6 +12,7 @@ from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException
 
 from smartdoc.api.errors import http_error, problem, validation_error
+from smartdoc.api.graph import router as graph_router
 from smartdoc.api.health import router
 from smartdoc.api.ingestion import ingestion_error
 from smartdoc.api.ingestion import router as ingestion_router
@@ -24,6 +25,7 @@ from smartdoc.ingestion.worker import IngestionWorker
 from smartdoc.nlp.inference import LocalInference
 from smartdoc.nlp.pipeline import LanguagePipeline
 from smartdoc.persistence.database import create_database_engine
+from smartdoc.persistence.graph_store import GraphStore
 from smartdoc.persistence.ingestion_store import IngestionStore
 from smartdoc.persistence.ncm_store import NcmStore
 from smartdoc.persistence.nlp_store import NlpStore
@@ -46,6 +48,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     pipeline = LanguagePipeline(settings.nlp_profile, models, settings.nlp_terms)
     annotations = NlpStore(writer, pipeline)
     concepts = NcmStore(writer, pipeline.key, settings.ncm_weights)
+    graph = GraphStore(writer, pipeline.key, concepts.key)
     worker = IngestionWorker(
         store,
         readiness,
@@ -53,6 +56,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         structures=structures,
         annotations=annotations,
         concepts=concepts,
+        graph=graph,
     )
 
     @asynccontextmanager
@@ -87,6 +91,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.structure_store = structures
     app.state.nlp_store = annotations
     app.state.ncm_store = concepts
+    app.state.graph_store = graph
     app.state.local_inference = LocalInference(models)
     app.state.settings = settings
     app.add_exception_handler(ExtractionError, ingestion_error)
@@ -97,6 +102,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(structure_router)
     app.include_router(nlp_router)
     app.include_router(ncm_router)
+    app.include_router(graph_router)
 
     @app.middleware("http")
     async def correlate_request(

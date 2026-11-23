@@ -111,3 +111,20 @@ The worker schedules a snapshot after NLP is ready. These routes are relative to
 List endpoints are paginated. Snapshot data endpoints accept `revision=...`. Revision writes require `X-SmartDoc-Local: 1`, a reason and `expected_revision`. A stale edit returns HTTP 409. Example merge input is `{"action":"merge","expected_revision":1,"reason":"Confirmed terminology in this manual","source":"source-uuid","target":"target-uuid"}`.
 
 Use `GET /api/v1/workspaces/local/ncm/compare?left=...&right=...` for evidence-backed differences. Supply optional left and right revision numbers. Chronology defaults to `unspecified`. `declared_left_before_right` records a caller-provided ordering. Every returned side retains its own anchors.
+
+## Knowledge graph
+
+Routes are relative to `/api/v1/workspaces/local/graph`. Graph endpoints use the most recent ready version unless `version_id` is supplied.
+
+| Method and path | Purpose |
+|---|---|
+| `GET` on the `/graph` path itself | Read the most recent build status, source revision IDs and available ready version. |
+| `GET /versions` and `GET /versions/{version_id}` | Read graph version history or one version. |
+| `GET /nodes` and `GET /nodes/{node_id}` | Browse nodes or read a node. Use `document_id`, `kind` and `query` for node browsing. |
+| `GET /edges` and `GET /edges/{edge_id}/evidence` | Read exact stored edges and their evidence. Edge filters include `document_id`, `node_id`, `predicate`, `kind` and `validation`. |
+| `GET /neighbors?node_id=...&direction=both` | Expand up to three hops. Each returned edge contains a source excerpt. |
+| `GET /paths?source=...&target=...&direction=both` | Find an evidenced path, with an explicit result if traversal is bounded or finds no route. |
+| `GET /orphans` | List concept-bearing nodes without traversable edges in the selected view. |
+| `GET /analytics?communities=true` | Calculate components, degree centrality, isolated nodes, cycle groups and optional communities. |
+
+Use `view=semantic`, `view=dependencies` or `view=all` for navigation filters. The semantic view is the default for paths and neighborhoods. Edge browsing defaults to all records. Set `version_id` from the first page before continuing with `next_cursor`. The [graph design](KNOWLEDGE_GRAPH_DESIGN.md) explains link semantics, scope and bounds.

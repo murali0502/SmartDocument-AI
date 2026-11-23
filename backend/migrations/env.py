@@ -1,7 +1,21 @@
 from alembic import context
 
 from smartdoc.config import Settings
-from smartdoc.persistence import ingestion_models, ncm_models, nlp_models, structure_models  # noqa: F401
+from smartdoc.persistence import (
+    graph_models as graph_models,
+)
+from smartdoc.persistence import (
+    ingestion_models as ingestion_models,
+)
+from smartdoc.persistence import (
+    ncm_models as ncm_models,
+)
+from smartdoc.persistence import (
+    nlp_models as nlp_models,
+)
+from smartdoc.persistence import (
+    structure_models as structure_models,
+)
 from smartdoc.persistence.database import create_database_engine, database_url
 from smartdoc.persistence.models import Base
 

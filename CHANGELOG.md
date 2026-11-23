@@ -1,5 +1,11 @@
 # Changelog
 
+## Phase 6 — Collection knowledge graph
+
+- Added relational graph versions with source revisions, typed nodes, assertions, provenance and definition links.
+- Added bounded navigation, evidence lookup, orphan detection, centrality, cycles and optional communities.
+- Added graph integrity checks and versioned replay after NCM reviews.
+
 ## Phase 5 — NCM core
 
 - Added source-verified concepts, conservative aliases, scoring, assertions and hierarchy.

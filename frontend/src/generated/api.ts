@@ -430,6 +430,193 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/local/graph": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Status */
+        get: operations["status_api_v1_workspaces_local_graph_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/local/graph/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Versions */
+        get: operations["versions_api_v1_workspaces_local_graph_versions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/local/graph/versions/{version_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Version */
+        get: operations["version_api_v1_workspaces_local_graph_versions__version_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/local/graph/nodes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Nodes */
+        get: operations["nodes_api_v1_workspaces_local_graph_nodes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/local/graph/nodes/{node_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Node */
+        get: operations["node_api_v1_workspaces_local_graph_nodes__node_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/local/graph/edges": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Edges */
+        get: operations["edges_api_v1_workspaces_local_graph_edges_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/local/graph/edges/{edge_id}/evidence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Evidence */
+        get: operations["evidence_api_v1_workspaces_local_graph_edges__edge_id__evidence_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/local/graph/neighbors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Neighbors */
+        get: operations["neighbors_api_v1_workspaces_local_graph_neighbors_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/local/graph/paths": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Paths */
+        get: operations["paths_api_v1_workspaces_local_graph_paths_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/local/graph/orphans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Orphans */
+        get: operations["orphans_api_v1_workspaces_local_graph_orphans_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/local/graph/analytics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Metrics */
+        get: operations["metrics_api_v1_workspaces_local_graph_analytics_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -454,6 +641,30 @@ export interface components {
             alternatives: string[];
             /** Evidence */
             evidence: components["schemas"]["Anchor"][];
+        };
+        /** Analytics */
+        Analytics: {
+            /**
+             * Version Id
+             * Format: uuid
+             */
+            version_id: string;
+            /** Node Count */
+            node_count: number;
+            /** Edge Count */
+            edge_count: number;
+            /** Component Count */
+            component_count: number;
+            /** Isolated Count */
+            isolated_count: number;
+            /** Degree */
+            degree: components["schemas"]["Degree"][];
+            /** Cycles */
+            cycles: components["schemas"]["GraphGroup"][];
+            /** Communities */
+            communities: components["schemas"]["GraphGroup"][];
+            /** Groups Truncated */
+            groups_truncated: boolean;
         };
         /** Anchor */
         Anchor: {
@@ -725,6 +936,18 @@ export interface components {
              */
             qualified: boolean;
         };
+        /** Degree */
+        Degree: {
+            /**
+             * Node Id
+             * Format: uuid
+             */
+            node_id: string;
+            /** Degree */
+            degree: number;
+            /** Centrality */
+            centrality: number;
+        };
         /** DependencyCycle */
         DependencyCycle: {
             /** Concepts */
@@ -804,6 +1027,11 @@ export interface components {
             lexical_key: string;
             /** Evidence */
             evidence: components["schemas"]["Anchor"][];
+        };
+        /** EdgeStep */
+        EdgeStep: {
+            edge: components["schemas"]["GraphEdge"];
+            evidence: components["schemas"]["Anchor"];
         };
         /** Element */
         Element: {
@@ -889,6 +1117,179 @@ export interface components {
             units: components["schemas"]["SourceUnit"][];
             /** Warnings */
             warnings?: string[];
+        };
+        /** GraphEdge */
+        GraphEdge: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Source Id
+             * Format: uuid
+             */
+            source_id: string;
+            /**
+             * Target Id
+             * Format: uuid
+             */
+            target_id: string;
+            /**
+             * Predicate
+             * @enum {string}
+             */
+            predicate: "IS_A" | "PART_OF" | "HAS_PART" | "DEPENDS_ON" | "REQUIRES" | "CAUSED_BY" | "LEADS_TO" | "IMPLEMENTS" | "USES" | "PRODUCES" | "MEASURES" | "COMPARED_WITH" | "CONTRADICTS" | "SUPPORTS" | "DEFINED_BY" | "DERIVED_FROM" | "ASSOCIATED_WITH" | "PRECEDES" | "FOLLOWS" | "INSTANCE_OF" | "HAS_ATTRIBUTE";
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "assertion" | "hierarchy" | "provenance" | "definition";
+            /**
+             * Validation
+             * @enum {string}
+             */
+            validation: "source_validated" | "needs_review" | "conflicted" | "rejected";
+            /**
+             * Negated
+             * @default false
+             */
+            negated: boolean;
+            /** Modality */
+            modality?: string | null;
+            /** Method */
+            method: string;
+            /** Assertion Id */
+            assertion_id?: string | null;
+            /** Asserted At */
+            asserted_at?: string | null;
+            /** Traversable */
+            traversable: boolean;
+            /** Evidence Count */
+            evidence_count: number;
+        };
+        /** GraphGroup */
+        GraphGroup: {
+            /** Node Ids */
+            node_ids: string[];
+        };
+        /** GraphNode */
+        GraphNode: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "document" | "section" | "chunk" | "concept" | "entity" | "definition" | "method" | "algorithm" | "event" | "attribute" | "measurement" | "topic";
+            /** Label */
+            label: string;
+            /** Category */
+            category?: string | null;
+            /** Document Ids */
+            document_ids: string[];
+        };
+        /** GraphPage[Anchor] */
+        GraphPage_Anchor_: {
+            /**
+             * Version Id
+             * Format: uuid
+             */
+            version_id: string;
+            /** Items */
+            items: components["schemas"]["Anchor"][];
+            /** Next Cursor */
+            next_cursor: number | null;
+        };
+        /** GraphPage[GraphEdge] */
+        GraphPage_GraphEdge_: {
+            /**
+             * Version Id
+             * Format: uuid
+             */
+            version_id: string;
+            /** Items */
+            items: components["schemas"]["GraphEdge"][];
+            /** Next Cursor */
+            next_cursor: number | null;
+        };
+        /** GraphPage[GraphNode] */
+        GraphPage_GraphNode_: {
+            /**
+             * Version Id
+             * Format: uuid
+             */
+            version_id: string;
+            /** Items */
+            items: components["schemas"]["GraphNode"][];
+            /** Next Cursor */
+            next_cursor: number | null;
+        };
+        /** GraphPath */
+        GraphPath: {
+            /**
+             * Version Id
+             * Format: uuid
+             */
+            version_id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "found" | "not_found" | "limit_reached";
+            /** Node Ids */
+            node_ids: string[];
+            /** Steps */
+            steps: components["schemas"]["EdgeStep"][];
+            /**
+             * Truncated
+             * @default false
+             */
+            truncated: boolean;
+        };
+        /** GraphRevision */
+        GraphRevision: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Sequence */
+            sequence: number;
+            /**
+             * Version
+             * @default graph-v1
+             */
+            version: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ready" | "failed";
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Document Count */
+            document_count: number;
+            /** Node Count */
+            node_count: number;
+            /** Edge Count */
+            edge_count: number;
+            /** Error */
+            error?: string | null;
+            /** Sources */
+            sources: components["schemas"]["SourceRevision"][];
+        };
+        /** GraphStatus */
+        GraphStatus: {
+            latest: components["schemas"]["GraphRevision"] | null;
+            /** Available Version */
+            available_version: string | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -1021,6 +1422,25 @@ export interface components {
             label: string;
             /** Method */
             method: string;
+        };
+        /** Neighborhood */
+        Neighborhood: {
+            /**
+             * Version Id
+             * Format: uuid
+             */
+            version_id: string;
+            /**
+             * Root
+             * Format: uuid
+             */
+            root: string;
+            /** Nodes */
+            nodes: components["schemas"]["GraphNode"][];
+            /** Edges */
+            edges: components["schemas"]["EdgeStep"][];
+            /** Truncated */
+            truncated: boolean;
         };
         /** NliInput */
         NliInput: {
@@ -1227,6 +1647,13 @@ export interface components {
             /** Restore Revision */
             restore_revision: number;
         };
+        /** RevisionPage */
+        RevisionPage: {
+            /** Items */
+            items: components["schemas"]["GraphRevision"][];
+            /** Next Cursor */
+            next_cursor: number | null;
+        };
         /** Role */
         Role: {
             /** Label */
@@ -1281,6 +1708,26 @@ export interface components {
             audit?: {
                 [key: string]: unknown;
             } | null;
+        };
+        /** SourceRevision */
+        SourceRevision: {
+            /**
+             * Document Id
+             * Format: uuid
+             */
+            document_id: string;
+            /**
+             * Extraction Job Id
+             * Format: uuid
+             */
+            extraction_job_id: string;
+            /**
+             * Snapshot Id
+             * Format: uuid
+             */
+            snapshot_id: string;
+            /** Ncm Revision */
+            ncm_revision: number;
         };
         /** SourceSpan */
         SourceSpan: {
@@ -2254,6 +2701,385 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Comparison"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    status_api_v1_workspaces_local_graph_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GraphStatus"];
+                };
+            };
+        };
+    };
+    versions_api_v1_workspaces_local_graph_versions_get: {
+        parameters: {
+            query?: {
+                after?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevisionPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    version_api_v1_workspaces_local_graph_versions__version_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GraphRevision"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    nodes_api_v1_workspaces_local_graph_nodes_get: {
+        parameters: {
+            query?: {
+                version_id?: string | null;
+                after?: number;
+                limit?: number;
+                document_id?: string | null;
+                kind?: ("document" | "section" | "chunk" | "concept" | "entity" | "definition" | "method" | "algorithm" | "event" | "attribute" | "measurement" | "topic") | null;
+                query?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GraphPage_GraphNode_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    node_api_v1_workspaces_local_graph_nodes__node_id__get: {
+        parameters: {
+            query?: {
+                version_id?: string | null;
+                document_id?: string | null;
+            };
+            header?: never;
+            path: {
+                node_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GraphNode"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    edges_api_v1_workspaces_local_graph_edges_get: {
+        parameters: {
+            query?: {
+                version_id?: string | null;
+                after?: number;
+                limit?: number;
+                view?: "semantic" | "dependencies" | "all";
+                document_id?: string | null;
+                node_id?: string | null;
+                predicate?: ("IS_A" | "PART_OF" | "HAS_PART" | "DEPENDS_ON" | "REQUIRES" | "CAUSED_BY" | "LEADS_TO" | "IMPLEMENTS" | "USES" | "PRODUCES" | "MEASURES" | "COMPARED_WITH" | "CONTRADICTS" | "SUPPORTS" | "DEFINED_BY" | "DERIVED_FROM" | "ASSOCIATED_WITH" | "PRECEDES" | "FOLLOWS" | "INSTANCE_OF" | "HAS_ATTRIBUTE") | null;
+                kind?: ("assertion" | "hierarchy" | "provenance" | "definition") | null;
+                validation?: ("source_validated" | "needs_review" | "conflicted" | "rejected") | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GraphPage_GraphEdge_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    evidence_api_v1_workspaces_local_graph_edges__edge_id__evidence_get: {
+        parameters: {
+            query?: {
+                version_id?: string | null;
+                after?: number;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                edge_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GraphPage_Anchor_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    neighbors_api_v1_workspaces_local_graph_neighbors_get: {
+        parameters: {
+            query: {
+                node_id: string;
+                version_id?: string | null;
+                direction?: "out" | "in" | "both";
+                depth?: number;
+                limit?: number;
+                document_id?: string | null;
+                predicate?: ("IS_A" | "PART_OF" | "HAS_PART" | "DEPENDS_ON" | "REQUIRES" | "CAUSED_BY" | "LEADS_TO" | "IMPLEMENTS" | "USES" | "PRODUCES" | "MEASURES" | "COMPARED_WITH" | "CONTRADICTS" | "SUPPORTS" | "DEFINED_BY" | "DERIVED_FROM" | "ASSOCIATED_WITH" | "PRECEDES" | "FOLLOWS" | "INSTANCE_OF" | "HAS_ATTRIBUTE") | null;
+                kind?: ("assertion" | "hierarchy" | "provenance" | "definition") | null;
+                view?: "semantic" | "dependencies" | "all";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Neighborhood"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    paths_api_v1_workspaces_local_graph_paths_get: {
+        parameters: {
+            query: {
+                source: string;
+                target: string;
+                version_id?: string | null;
+                direction?: "out" | "in" | "both";
+                depth?: number;
+                document_id?: string | null;
+                predicate?: ("IS_A" | "PART_OF" | "HAS_PART" | "DEPENDS_ON" | "REQUIRES" | "CAUSED_BY" | "LEADS_TO" | "IMPLEMENTS" | "USES" | "PRODUCES" | "MEASURES" | "COMPARED_WITH" | "CONTRADICTS" | "SUPPORTS" | "DEFINED_BY" | "DERIVED_FROM" | "ASSOCIATED_WITH" | "PRECEDES" | "FOLLOWS" | "INSTANCE_OF" | "HAS_ATTRIBUTE") | null;
+                kind?: ("assertion" | "hierarchy" | "provenance" | "definition") | null;
+                view?: "semantic" | "dependencies" | "all";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GraphPath"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    orphans_api_v1_workspaces_local_graph_orphans_get: {
+        parameters: {
+            query?: {
+                version_id?: string | null;
+                after?: number;
+                limit?: number;
+                document_id?: string | null;
+                predicate?: ("IS_A" | "PART_OF" | "HAS_PART" | "DEPENDS_ON" | "REQUIRES" | "CAUSED_BY" | "LEADS_TO" | "IMPLEMENTS" | "USES" | "PRODUCES" | "MEASURES" | "COMPARED_WITH" | "CONTRADICTS" | "SUPPORTS" | "DEFINED_BY" | "DERIVED_FROM" | "ASSOCIATED_WITH" | "PRECEDES" | "FOLLOWS" | "INSTANCE_OF" | "HAS_ATTRIBUTE") | null;
+                kind?: ("assertion" | "hierarchy" | "provenance" | "definition") | null;
+                view?: "semantic" | "dependencies" | "all";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GraphPage_GraphNode_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    metrics_api_v1_workspaces_local_graph_analytics_get: {
+        parameters: {
+            query?: {
+                version_id?: string | null;
+                limit?: number;
+                communities?: boolean;
+                document_id?: string | null;
+                predicate?: ("IS_A" | "PART_OF" | "HAS_PART" | "DEPENDS_ON" | "REQUIRES" | "CAUSED_BY" | "LEADS_TO" | "IMPLEMENTS" | "USES" | "PRODUCES" | "MEASURES" | "COMPARED_WITH" | "CONTRADICTS" | "SUPPORTS" | "DEFINED_BY" | "DERIVED_FROM" | "ASSOCIATED_WITH" | "PRECEDES" | "FOLLOWS" | "INSTANCE_OF" | "HAS_ATTRIBUTE") | null;
+                kind?: ("assertion" | "hierarchy" | "provenance" | "definition") | null;
+                view?: "semantic" | "dependencies" | "all";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Analytics"];
                 };
             };
             /** @description Validation Error */

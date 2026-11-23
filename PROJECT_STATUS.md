@@ -1,6 +1,6 @@
 # SmartDoc AI project status
 
-Updated 23 November 2026. The Phase 0 architecture is approved. Phases 1 through 5 are implemented and verified on Linux. Phase 6 is pending.
+Updated 23 November 2026. The Phase 0 architecture is approved. Phases 1 through 6 are implemented and verified on Linux. Phase 7 is pending.
 
 ## Phase 1 implementation report
 
@@ -171,3 +171,36 @@ Rules found 18 of 21 concepts and 8 of 9 relations with no extra predictions in 
 NCM reads and review mutations are limited to the local workspace. The review header and expected revision are mandatory. The worker verifies exact extraction spans and reconstructs the relation pattern before accepting Phase 4 proposals. Tests include a fabricated relation candidate and a changed source string.
 
 The relation rules and alias patterns remain limited. Cross-document alignment is conservative. Source publication dates, broader authority and contradiction adjudication, and collection graph storage remain later work. Windows execution remains unverified. Phase 6 should build the versioned knowledge graph from NCM evidence.
+
+## Phase 6 implementation report
+
+### Features and decisions
+
+- Added versioned collection graph storage using SQLite. Each version freezes its source NCM and extraction records. Graph publication verifies source anchors and endpoints and publishes nodes, edges and evidence together.
+- Preserved document-scoped concepts. A shared definition node links uniquely named, compatible concepts with identical unqualified definition text. Case-sensitive distinctions are preserved.
+- Added filtered browsing, bounded neighborhoods and paths, orphan detection, and NetworkX components, degree centrality, cycles and optional communities.
+- Added graph replay after NCM review and fallback to last ready data when a new projection fails.
+
+### Files and dependencies
+
+Created `backend/migrations/versions/0006_knowledge_graph.py`, graph contracts, projection, query and analytics modules, relational storage, API routes and `backend/tests/test_graph.py`. Added `docs/KNOWLEDGE_GRAPH_DESIGN.md`. Updated the application worker, migration registration, generated API contract, README, changelog, and graph, data, API and testing documentation. Added NetworkX 3.7 through the runtime lock. There is no new model download or service.
+
+### Commands and observed results
+
+| Check | Commands or workflow | Result |
+|---|---|---|
+| Backend | `uv sync --locked`, Ruff lint and format, and `uv run --frozen pytest -q` | 68 passed with one optional-model check skipped. All 69 passed with pinned models enabled. |
+| Migration | Standalone `alembic upgrade head` and `alembic check`, plus upgrade from populated Phase 5 data | Passed. The standalone check initially exposed missing ORM registrations. Explicit imports and a CLI regression test now cover this path. |
+| Live HTTP | Two uploads, graph publication, filtered nodes, four-hop path, source comparison, analytics and restart | Both documents contributed verified excerpts, and the same version and path survived restart. |
+| Frontend | OpenAPI export, generated client check, `npm run build` and Playwright Chromium | Passed. |
+| Dependency advisories | `pip-audit` on the locked runtime export including optional packages | No known vulnerabilities reported. |
+
+### Performance and security observations
+
+The small live HTTP check published 17 nodes and 26 stored edges in 2.04 seconds from two uploads, including ingestion and queue polling. A four-hop path took 20.8 ms median across 15 warm HTTP requests. These are development measurements on a tiny graph. Larger corpus throughput and storage sizing remain unverified.
+
+Graph records stay within the local workspace and active configuration. Tests cover rejected, conflicted and conditional assertions, tampered evidence and foreign endpoint identifiers. Version publication preserves prior ready data if a new build fails.
+
+### Incomplete and upcoming
+
+The browser graph view, global identity merges, production audit and retention policies, large-graph evaluation, and Windows execution remain unverified or planned. Phase 7 should add sparse, dense, concept, structure and graph retrieval, then evaluate ranking and filtering against annotated queries.

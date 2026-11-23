@@ -9,4 +9,6 @@
 
 - Phase 4 linguistic rules target English and its relation and coreference outputs are limited candidates. The optional model evaluation uses a small fixture. Language coverage, production calibration and model support outside the tested Linux AVX2 environment remain unverified.
 
-- Phase 5 concept identities are document-scoped. Similarity only suggests review. Relation patterns cover a limited vocabulary. Comparisons preserve ambiguity and do not infer chronology from ingestion metadata. Phase 6 introduces the collection-level graph.
+- Phase 5 concept identities are document-scoped. Similarity only suggests review. Relation patterns cover a limited vocabulary. Comparisons preserve ambiguity and do not infer chronology from ingestion metadata. Phase 6 projects a collection graph with conservative definition-based alignment.
+
+- Phase 6 builds full local graph snapshots with explicit size limits. Navigation is budgeted, and analytics use a bounded simple graph projection. Collection-wide identity merging, distributed graph storage, retention policies and the browser graph view remain future work.

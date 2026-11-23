@@ -64,6 +64,10 @@ Phase 4 automatically annotates structured chunks with the standard rules profil
 
 Phase 5 builds concepts, aliases, hierarchy links and evidence-backed relationship candidates from completed NLP annotations. The [NCM API guide](docs/API_DOCUMENTATION.md#next-concept-modelling) covers snapshots, dependencies, revisions and comparisons.
 
+## Explore the knowledge graph
+
+Phase 6 publishes a collection graph with source-backed edges and immutable revisions. The [graph API guide](docs/API_DOCUMENTATION.md#knowledge-graph) covers neighborhood, path, evidence and analytics requests.
+
 ## Develop and verify
 
 ```sh

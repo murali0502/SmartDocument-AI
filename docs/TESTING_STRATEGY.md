@@ -12,4 +12,6 @@ Phase 4 tests exact linguistic spans, preservation of negation and modality, con
 
 Phase 5 tests exact concept and relationship anchors, ambiguous aliases and scoped definitions, negative and conflicting claims, dependency cycles and impact, score overrides, review history, rebuild, and backfill. `scripts/eval_ncm.py` reports precision, recall, F1 and evidence round trips on the independent small Phase 5 fixture.
 
+Phase 6 tests immutable revisions and migration from existing NCM snapshots, exact definition alignment, case-sensitive distinctions, evidence reproduction, foreign endpoint rejection, graph fallback on failed builds, filtered paths, dependency cycles, orphans and communities.
+
 Later phases add viewer geometry round trips, NLP and NCM annotations, ranked retrieval benchmarks, authorization tests, and the full upload-to-source workflow. The [roadmap](DEVELOPMENT_ROADMAP.md) tracks their exit conditions.
