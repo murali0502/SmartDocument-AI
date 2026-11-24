@@ -72,6 +72,19 @@ def create_hosted_app(
         response.headers["Cache-Control"] = "private, no-store"
         return response
 
+    @app.middleware("http")
+    async def add_workspace_headers(
+        request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["Referrer-Policy"] = "no-referrer"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Content-Security-Policy"] = (
+            "frame-ancestors 'none'; object-src 'none'; base-uri 'self'"
+        )
+        return response
+
     return app
 
 

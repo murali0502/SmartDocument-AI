@@ -6,7 +6,15 @@ from pydantic import BaseModel
 
 from smartdoc.ingestion.contracts import ExtractionError
 from smartdoc.ncm.candidates import normalized
-from smartdoc.ncm.contracts import Alias, Anchor, Concept, Snapshot, Weights
+from smartdoc.ncm.contracts import (
+    Alias,
+    Anchor,
+    Assertion,
+    Concept,
+    RelationType,
+    Snapshot,
+    Weights,
+)
 from smartdoc.ncm.model import definitions, hierarchy, mark_conflicts
 from smartdoc.ncm.scoring import rank
 from smartdoc.ncm.similarity import duplicate_suggestions
@@ -210,4 +218,50 @@ def compare(left: Snapshot, right: Snapshot) -> list[Change]:
     for second in right.concepts:
         if second.id not in used:
             change("only_right", None, second, [], [second.mentions[0].evidence])
+    return results
+
+
+class OpposingStatements(BaseModel):
+    subject: str
+    relation: RelationType
+    object: str
+    left: Anchor
+    right: Anchor
+
+
+def opposing_statements(left: Snapshot, right: Snapshot, limit: int) -> list[OpposingStatements]:
+    def indexed(snapshot: Snapshot):
+        concepts = {concept.id: concept for concept in snapshot.concepts}
+        rows: dict[tuple[tuple, RelationType, tuple, bool], Assertion] = {}
+        for assertion in snapshot.assertions:
+            if assertion.validation not in {"source_validated", "conflicted"} or assertion.modality:
+                continue
+            subject, target = concepts.get(assertion.subject_id), concepts.get(assertion.object_id)
+            if subject is None or target is None:
+                continue
+            key = (
+                (subject.normalized, subject.category, subject.sense),
+                assertion.type,
+                (target.normalized, target.category, target.sense),
+                assertion.negated,
+            )
+            rows.setdefault(key, assertion)
+        return rows
+
+    opposite = indexed(right)
+    results = []
+    for (subject, relation, target, negated), assertion in indexed(left).items():
+        match = opposite.get((subject, relation, target, not negated))
+        if match is not None:
+            results.append(
+                OpposingStatements(
+                    subject=subject[0],
+                    relation=relation,
+                    object=target[0],
+                    left=assertion.evidence,
+                    right=match.evidence,
+                )
+            )
+            if len(results) == limit:
+                break
     return results

@@ -105,7 +105,12 @@ def test_ask_requires_one_direct_statement_in_selected_document(database, migrat
                 assert data["answer"] == "The pump requires a filter."
                 assert data["citations"][0]["document_id"] == reliable
             else:
-                assert data["status"] == "insufficient_evidence"
+                expected = (
+                    "insufficient_evidence"
+                    if document_id == unrelated
+                    else "clarification_required"
+                )
+                assert data["status"] == expected
                 assert data["citations"] == []
 
 
@@ -146,3 +151,92 @@ def test_pdf_summary_quotes_selected_document_across_pages(database, migration):
         assert [hit["locator"]["page"] for hit in answer["citations"]] == [1, 2]
         for excerpt, hit in zip(passages, answer["citations"], strict=True):
             assert excerpt in client.get(hit["source_url"]).json()["primary"]["text"]
+
+
+def test_reasoning_cites_dependency_chain_and_checked_conversion(database, migration):
+    command.upgrade(migration, "head")
+    app = create_app(Settings(database_path=database, ingestion_worker=False))
+    document = model(
+        app,
+        database,
+        "technical.md",
+        "# Circuit\n\n"
+        "The pump requires a filter. The filter depends on a valve.\n\n"
+        "The rated voltage is 220 V.\n\n"
+        "The circuit was approved in 2024.",
+    )
+    assert app.state.graph_store.build_next()
+    with TestClient(app, base_url="http://localhost", client=("127.0.0.1", 50000)) as client:
+        checks = {
+            "How does pump depend on valve?": "The document supports this dependency chain.",
+            "What is the rated voltage in kV?": "0.22 kV",
+            "When was the circuit approved?": "The circuit was approved in 2024.",
+        }
+        for question, expected in checks.items():
+            response = client.post(
+                f"{BASE}/ask",
+                json={
+                    "document_id": document,
+                    "question": question,
+                },
+            )
+            assert response.status_code == 200, response.text
+            data = response.json()
+            assert data["answer"] == expected, data
+            for hit in data["citations"]:
+                assert client.get(hit["source_url"]).json()["primary"] == hit["evidence"]
+            if question.startswith("How"):
+                assert data["reasoning"] == ["pump requires filter.", "filter depends on valve."]
+        mismatch = client.post(
+            f"{BASE}/ask",
+            json={
+                "document_id": document,
+                "question": "What is the rated voltage in A?",
+            },
+        ).json()
+        assert mismatch["status"] == "insufficient_evidence"
+
+
+def test_evaluation_report_contains_measured_baseline(database, migration):
+    command.upgrade(migration, "head")
+    app = create_app(Settings(database_path=database, ingestion_worker=False))
+    with TestClient(app, base_url="http://localhost", client=("127.0.0.1", 50000)) as client:
+        report = client.get(f"{BASE}/evaluation").json()
+        assert report["queries"] > 0
+        assert 0 <= report["variants"]["bm25"]["recall_at_5"] <= 1
+
+
+def test_comparison_reports_source_backed_opposing_statements(database, migration):
+    command.upgrade(migration, "head")
+    app = create_app(Settings(database_path=database, ingestion_worker=False))
+    first = model(app, database, "first.md", "The pump requires a filter.")
+    second = model(app, database, "second.md", "The pump does not require a filter.")
+    with TestClient(app, base_url="http://localhost", client=("127.0.0.1", 50000)) as client:
+        response = client.get(f"{BASE}/ncm/compare", params={"left": first, "right": second})
+        assert response.status_code == 200, response.text
+        opposing = response.json()["opposing_statements"]
+        assert len(opposing) == 1
+        assert "requires a filter" in opposing[0]["left"]["text"]
+        assert "does not require a filter" in opposing[0]["right"]["text"]
+
+
+def test_question_can_be_scoped_to_a_named_section(database, migration):
+    command.upgrade(migration, "head")
+    app = create_app(Settings(database_path=database, ingestion_worker=False))
+    document = model(
+        app,
+        database,
+        "modes.md",
+        "# Standard mode\n\nThe pump requires a filter.\n\n"
+        "# Service mode\n\nThe pump requires a regulator.",
+    )
+    with TestClient(app, base_url="http://localhost", client=("127.0.0.1", 50000)) as client:
+        response = client.post(
+            f"{BASE}/ask",
+            json={
+                "document_id": document,
+                "question": "What does the pump require in section Service mode?",
+            },
+        )
+        assert response.status_code == 200, response.text
+        assert response.json()["answer"] == "The pump requires a regulator."

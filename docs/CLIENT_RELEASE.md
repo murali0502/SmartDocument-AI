@@ -1,0 +1,30 @@
+# SmartDoc AI client release
+
+Open the main application and sign in with the workspace credentials. Use **Ask SmartDoc** to upload a document, wait for processing, ask a question and inspect its sources. Ask “Summarize this document” for cited excerpts. Ask “How does the pump depend on the valve?” for a source-backed dependency chain when the document graph contains that path. Date questions and electrical unit conversions require a directly stated date or an unambiguous compatible measurement.
+
+Use **Documents** for extracted passages, structured fields and concept revisions. **Concepts**, **Knowledge graph** and **Compare** expose source-backed relationships and differences. **Analytics** shows graph coverage and disconnected concepts that may merit review. **Evaluation** displays the packaged result from the reproducible synthetic benchmark below. **Settings** controls theme and interface motion for the current browser.
+
+## Hosted operation
+
+Deploy the Dockerfile as one instance over HTTPS and mount persistent storage at `/data`. Configure `SMARTDOC_HOSTED_PASSWORD` in the host secret settings. The service uses a shared workspace for the trusted client team. Keep the readiness URL at `/api/v1/health/ready`. Railway logs expose request IDs, route templates, response status, and request duration for troubleshooting.
+
+Back up or restore into a fresh directory with the snapshot utility. It copies SQLite through its online backup API, checks database integrity, and verifies the SHA-256 digest of each copied original. Use an authorized shell with access to both the database and its originals. Keep snapshots in private storage outside the service volume.
+
+```sh
+python scripts/snapshot_workspace.py \
+  --database /data/smartdoc.sqlite3 --storage /data/uploads \
+  --destination /backups/smartdoc-snapshot
+
+python scripts/snapshot_workspace.py \
+  --database /backups/smartdoc-snapshot/smartdoc.sqlite3 \
+  --storage /backups/smartdoc-snapshot/uploads \
+  --destination /restore/smartdoc
+```
+
+Start a separate service against the restored SQLite file and uploads directory. Check readiness, list documents, and download a known original before any production cutover.
+
+## Evidence and limits
+
+On the frozen synthetic fixture (six documents, eight questions, 17 chunks), the keyword baseline achieved 87.5% recall@5 and 0.750 MRR@5. Model-free reranked search achieved 100% recall@5 and 0.729 MRR@5. The measured service-side median was 4.67 ms for reranked search, with peak benchmark-process memory of 97.7 MiB. The fixture is an engineering check. It does not establish accuracy or capacity on the client’s corpus.
+
+Run the benchmark from the repository root with `uv run --project backend --frozen python scripts/eval_retrieval.py`. Review broad multilingual accuracy, optional model-assisted answer validation, large-corpus performance, and formal independent security assessment separately from this release.

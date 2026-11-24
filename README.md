@@ -50,6 +50,8 @@ The backend listens on `127.0.0.1:8000` by default. The frontend forwards same-o
 
 ## Hosted deployment
 
+See the [client release guide](docs/CLIENT_RELEASE.md) for the browser workflow, benchmark scope and backup/restore procedure.
+
 The root `Dockerfile` packages the browser and API together. Deploy one instance behind HTTPS and mount a persistent volume at `/data`. Set `SMARTDOC_HOSTED_PASSWORD` to a randomly generated password of at least 24 ASCII characters. Sign in as `smartdoc` to upload documents and use **Ask SmartDoc**. Railway can use `/api/v1/health/ready` as its health check. The container applies database migrations on startup.
 
 The hosted app uses a single shared workspace. Anyone with the password can access its documents and results. The volume stores the SQLite database and original uploads. Keep the same volume across deployments and back it up separately.

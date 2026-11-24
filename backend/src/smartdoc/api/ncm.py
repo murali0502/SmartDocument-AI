@@ -19,7 +19,15 @@ from smartdoc.ncm.contracts import (
     Snapshot,
 )
 from smartdoc.ncm.dependencies import DependencyView, Direction, dependency_view
-from smartdoc.ncm.revisions import Change, Chronology, compare, merge, reject_assertion
+from smartdoc.ncm.revisions import (
+    Change,
+    Chronology,
+    OpposingStatements,
+    compare,
+    merge,
+    opposing_statements,
+    reject_assertion,
+)
 from smartdoc.persistence.ncm_models import NcmSnapshot
 from smartdoc.persistence.ncm_store import NcmStore
 
@@ -283,6 +291,8 @@ class Comparison(BaseModel):
     left_revision: SnapshotStatus
     right_revision: SnapshotStatus
     changes: Page[Change]
+    opposing_statements: list[OpposingStatements] = Field(default_factory=list)
+    opposing_truncated: bool = False
 
 
 @router.get("/ncm/compare")
@@ -299,9 +309,12 @@ def compare_documents(
 ) -> Comparison:
     left_row, first = stored_snapshot(request, response, left, left_revision)
     right_row, second = stored_snapshot(request, response, right, right_revision)
+    contradictions = opposing_statements(first, second, limit + 1)
     return Comparison(
         chronology=chronology,
         left_revision=summary(left_row),
         right_revision=summary(right_row),
         changes=page(compare(first, second), after, limit),
+        opposing_statements=contradictions[:limit],
+        opposing_truncated=len(contradictions) > limit,
     )

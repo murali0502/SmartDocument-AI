@@ -1,35 +1,12 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import type { components } from "../../generated/api"
 import { api, json, message } from "../../api"
+import { RequestState, useResource } from "../../resources"
 
 type Schema = components["schemas"]
 type Anchor = Schema["Anchor"]
 type Node = Schema["GraphNode"]
 type Page = "documents" | "concepts" | "graph" | "compare" | "search"
-
-function useResource<T>(url: string) {
-  const [value, setValue] = useState<{ url: string; data?: T; error?: string }>()
-  const [attempt, reload] = useState(0)
-  const key = url ? `${url}|${attempt}` : ""
-  useEffect(() => {
-    if (!url) return
-    const controller = new AbortController()
-    json<T>(url, { signal: controller.signal }).then(
-      data => { if (!controller.signal.aborted) setValue({ url: key, data }) },
-      error => { if (!controller.signal.aborted) setValue({ url: key, error: message(error) }) },
-    )
-    return () => controller.abort()
-  }, [url, key])
-  const current = value?.url === key ? value : undefined
-  return { data: current?.data, error: current?.error, loading: Boolean(url && !current), refresh: () => reload(n => n + 1) }
-}
-
-function RequestState({ result }: { result: { loading: boolean; error?: string; refresh: () => void } }) {
-  return <>
-    {result.loading && <p role="status">Loading…</p>}
-    {result.error && <div><p role="alert">{result.error}</p><button onClick={result.refresh}>Try again</button></div>}
-  </>
-}
 
 function AnchorCard({ anchor }: { anchor: Anchor }) {
   const location = Object.entries(anchor.locator).map(([key, value]) => `${key.replaceAll("_", " ")} ${value}`).join(" · ")
@@ -56,7 +33,52 @@ function DocumentDetail({ id }: { id: string }) {
       <p className="passage">{chunk.text}</p>
     </details>)}
     <Pagination cursor={chunks.data?.next_cursor} after={after} history={history} setAfter={setAfter} setHistory={setHistory} />
+    {info.data?.status === "ready" && <DocumentAnalysis id={id} />}
   </section>
+}
+
+function StructuredFields({ data }: { data: Record<string, unknown> }) {
+  const tables = Array.isArray(data.tables) && data.tables.length > 0 ? data.tables : [data.rows]
+  const matrices = tables.filter((table): table is unknown[][] =>
+    Array.isArray(table) && table.length > 0 && table.every(Array.isArray),
+  )
+  return matrices.length > 0 ? matrices.map((rows, index) => <div className="table-scroll" key={index}>
+    <table>
+      <caption>Extracted table {index + 1}</caption>
+      <tbody>{rows.map((row, rowIndex) => <tr key={rowIndex}>
+        {row.map((cell, cellIndex) => <td key={cellIndex}>{String(cell ?? "")}</td>)}
+      </tr>)}</tbody>
+    </table>
+  </div>) : <pre className="structured-data">{JSON.stringify(data, null, 2)}</pre>
+}
+
+function DocumentAnalysis({ id }: { id: string }) {
+  const [showExtraction, setShowExtraction] = useState(false)
+  const [showRevisions, setShowRevisions] = useState(false)
+  const data = useResource<Schema["Extraction"]>(showExtraction ? `${api}/documents/${id}/extraction` : "")
+  const revisions = useResource<Schema["Page_SnapshotStatus_"]>(showRevisions ? `${api}/documents/${id}/ncm/revisions` : "")
+  const units = data.data?.units.filter(unit => unit.data && Object.keys(unit.data).length > 0) ?? []
+  return <>
+    <details className="explore-row" onToggle={event => setShowExtraction(event.currentTarget.open)}>
+      <summary>Structured extraction</summary>
+      <RequestState result={data} />
+      {data.data && <p className="muted">{data.data.units.length} source units · Parser {data.data.parser}</p>}
+      {data.data?.warnings?.map((warning, index) => <p key={index}>{warning}</p>)}
+      {data.data && units.length === 0 && <p>No structured fields were extracted.</p>}
+      {units.map((unit, index) => <details className="explore-row" key={index}>
+        <summary>{unit.kind} · {Object.values(unit.locator ?? {}).join(" / ") || index + 1}</summary>
+        <StructuredFields data={unit.data ?? {}} />
+      </details>)}
+    </details>
+    <details className="explore-row" onToggle={event => setShowRevisions(event.currentTarget.open)}>
+      <summary>Concept revision history</summary>
+      <RequestState result={revisions} />
+      {revisions.data?.items.length === 0 && <p>Concept analysis is still processing.</p>}
+      <ul>{revisions.data?.items.map(revision => <li key={revision.revision}>
+        Revision {revision.revision} · {revision.status} · {revision.concept_count ?? 0} concepts
+      </li>)}</ul>
+    </details>
+  </>
 }
 
 function Pagination({ cursor, after, history, setAfter, setHistory }: {
@@ -150,6 +172,18 @@ function Comparison({ left, right }: { left: string; right: string }) {
       </div>
     </details>)}
     <Pagination cursor={result.data?.changes.next_cursor} after={after} history={history} setAfter={setAfter} setHistory={setHistory} />
+    {result.data?.opposing_statements?.length ? <div className="insight-section">
+      <h2>Opposing statements</h2>
+      <p className="muted">Check each source’s context before deciding whether these statements conflict.</p>
+      {result.data.opposing_statements.map((item, index) => <details className="explore-row" key={index}>
+        <summary>{item.subject} · {item.relation.toLowerCase().replaceAll("_", " ")} · {item.object}</summary>
+        <div className="comparison-columns">
+          <div><h3>First document</h3><AnchorCard anchor={item.left} /></div>
+          <div><h3>Second document</h3><AnchorCard anchor={item.right} /></div>
+        </div>
+      </details>)}
+      {result.data.opposing_truncated && <p className="muted">Showing the first 25 matches.</p>}
+    </div> : null}
   </section>
 }
 

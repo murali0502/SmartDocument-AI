@@ -22,7 +22,12 @@ def test_hosted_access_and_upload(migration, database, tmp_path):
 
         assert client.get("/api/v1/health/ready").status_code == 200
         assert client.get("/", auth=("smartdoc", "wrong")).status_code == 401
-        assert client.get("/", auth=auth).text == "SmartDoc AI"
+        home = client.get("/", auth=auth)
+        assert home.text == "SmartDoc AI"
+        assert home.headers["X-Content-Type-Options"] == "nosniff"
+        assert home.headers["X-Frame-Options"] == "DENY"
+        assert "frame-ancestors 'none'" in home.headers["Content-Security-Policy"]
+        assert home.headers["Referrer-Policy"] == "no-referrer"
         assert "/swagger/swagger-ui-bundle.js" in client.get("/api/v1/docs", auth=auth).text
 
         headers = {"Content-Type": "application/octet-stream", "X-SmartDoc-Upload": "1"}

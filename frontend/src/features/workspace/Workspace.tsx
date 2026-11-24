@@ -153,8 +153,14 @@ export function Workspace() {
 
   return (
     <>
-      <div className="page-title"><div><h1>Ask SmartDoc</h1>
-        <p>Upload a document, ask a question, and check the source.</p></div></div>
+      <section className="ask-hero">
+        <div><h1>Ask SmartDoc</h1><p>Ask questions about your documents and trace each answer back to its source.</p></div>
+        <div className="hero-visual" aria-hidden="true">
+          <div className="hero-ring hero-ring-outer" /><div className="hero-ring hero-ring-inner" />
+          <div className="hero-document"><i /><i /><i /><i /></div>
+          <span className="hero-spark">✦</span><span className="hero-check">✓</span>
+        </div>
+      </section>
       <div className="workspace-grid">
         <section className="workspace-panel" aria-labelledby="library">
           <h2 id="library">Document library</h2>
@@ -162,7 +168,7 @@ export function Workspace() {
             <label htmlFor="document">Choose a document</label>
             <input id="document" name="document" type="file" required
               accept=".pdf,.docx,.txt,.md,.html,.csv,.xlsx,.pptx,.json,.yaml,.yml,.png,.jpg,.jpeg,.tif,.tiff" />
-            <button disabled={uploading}>{uploading ? "Uploading…" : "Upload document"}</button>
+            <button className="primary-button" disabled={uploading}>{uploading ? "Uploading…" : "Upload document"}</button>
           </form>
           {libraryError && <p role="alert">{libraryError}</p>}
           {loading && <p role="status">Loading documents…</p>}
@@ -194,15 +200,17 @@ export function Workspace() {
             <textarea id="question" rows={3} maxLength={512} required disabled={asking || sourceBusy}
               placeholder="What does the pump require?" value={question}
               onChange={event => setQuestion(event.target.value)} />
-            <small className="muted">Ask for a summary, definition, requirement, or dependency.</small>
-            <button disabled={asking || sourceBusy || !activeDocument || !question.trim()}>{asking ? "Searching…" : "Ask SmartDoc"}</button>
+            <small className="muted">Try a summary, a definition, a dependency chain, a date, or a unit conversion.</small>
+            <button className="primary-button" disabled={asking || sourceBusy || !activeDocument || !question.trim()}>{asking ? "Searching…" : "Ask SmartDoc"}</button>
           </form>
           {answerError && <p role="alert">{answerError}</p>}
           {answer && <section className="answer-result" aria-live="polite">
-            <h3>{answer.summary?.length ? "Document summary" : answer.status === "answered" ? "Answer" : "Insufficient evidence"}</h3>
+            <h3>{answer.summary?.length ? "Document summary" : answer.status === "answered" ? "Answer" : answer.status === "clarification_required" ? "Clarification needed" : "Insufficient evidence"}</h3>
             {answer.summary?.length
               ? <ul>{answer.summary.map((excerpt, index) => <li key={index}>{excerpt}</li>)}</ul>
               : <p>{answer.answer ?? "SmartDoc couldn’t verify a direct answer in this document."}</p>}
+            {answer.reasoning?.length ? <ol className="reasoning-list">{answer.reasoning.map((step, index) =>
+              <li key={index}>{step}</li>)}</ol> : null}
             {hits.length > 0 && <ul className="citation-list">{hits.map(hit => <li key={hit.chunk_id}>
               {answer.status !== "answered" && <p className="muted">{hit.evidence.text.slice(0, 240)}{hit.evidence.text.length > 240 && "…"}</p>}
               <button type="button" disabled={asking || sourceBusy} onClick={() => void openSource(hit)}>

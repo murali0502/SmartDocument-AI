@@ -51,10 +51,25 @@ test("uploads, answers, opens a citation, and abstains", async ({ page }) => {
     env: { ...process.env, SMARTDOC_DATABASE_PATH: database },
   })
   await page.goto("/")
+  const manual = execFileSync("uv", ["run", "--frozen", "python", "-c", [
+    "import sys",
+    "from reportlab.pdfgen.canvas import Canvas",
+    "from reportlab.platypus import Table, TableStyle",
+    "from reportlab.lib import colors",
+    "canvas = Canvas(sys.stdout.buffer)",
+    "canvas.drawString(36, 750, 'The pump requires a ceramic filter.')",
+    "parts = Table([['Component', 'Material'], ['Filter', 'Ceramic']], colWidths=[120, 120])",
+    "parts.setStyle(TableStyle([('GRID', (0, 0), (-1, -1), 0.8, colors.black)]))",
+    "parts.wrapOn(canvas, 400, 200)",
+    "parts.drawOn(canvas, 36, 625)",
+    "canvas.showPage()",
+    "canvas.drawString(36, 750, 'The filter removes small particles from the water supply.')",
+    "canvas.save()",
+  ].join("\n")], { cwd: backend })
   await page.getByLabel("Choose a document").setInputFiles({
-    name: "maintenance.txt",
-    mimeType: "text/plain",
-    buffer: Buffer.from("The pump requires a ceramic filter.\n\nThe filter removes small particles from the water supply.\n"),
+    name: "maintenance.pdf",
+    mimeType: "application/pdf",
+    buffer: manual,
   })
   await page.getByRole("button", { name: "Upload document" }).click()
   await expect(page.locator(".document-list")).toContainText("Ready", { timeout: 30000 })
@@ -70,13 +85,17 @@ test("uploads, answers, opens a citation, and abstains", async ({ page }) => {
   await expect(page.locator(".source-card")).toContainText("The pump requires a ceramic filter.")
   const download = page.waitForEvent("download")
   await page.getByRole("link", { name: "Download original" }).click()
-  expect((await download).suggestedFilename()).toBe("maintenance.txt")
+  expect((await download).suggestedFilename()).toBe("maintenance.pdf")
   await page.getByRole("textbox", { name: "Question" }).fill("Who designed the pump?")
   await page.getByRole("button", { name: "Ask SmartDoc" }).click()
   await expect(page.getByRole("heading", { name: "Insufficient evidence" })).toBeVisible()
   await expect(page.locator(".source-card")).toHaveCount(0)
   await page.setViewportSize({ width: 375, height: 760 })
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await page.getByRole("link", { name: "maintenance.pdf" }).click()
+  await page.locator("summary").filter({ hasText: "Structured extraction" }).click()
+  await page.locator("summary").filter({ hasText: /^page/ }).first().click()
+  await expect(page.getByRole("cell", { name: "Ceramic" })).toBeVisible()
 })
 
 test("explores documents, concepts, relationships, and comparisons", async ({ page }) => {
@@ -132,4 +151,29 @@ test("explores documents, concepts, relationships, and comparisons", async ({ pa
   await page.getByLabel("First document").selectOption(ids[0])
   await page.getByLabel("Second document").selectOption(ids[1])
   await expect(page.locator("summary").filter({ hasText: /only (left|right)/ }).first()).toBeVisible()
+  await page.getByRole("link", { name: "Analytics", exact: true }).click()
+  await expect(page.getByRole("heading", { name: "Graph coverage" })).toBeVisible()
+})
+
+test("shows evaluation results and persists client appearance settings", async ({ page }, info) => {
+  execFileSync("uv", ["run", "--frozen", "alembic", "upgrade", "head"], {
+    cwd: backend,
+    env: { ...process.env, SMARTDOC_DATABASE_PATH: database },
+  })
+  await page.goto("/")
+  await expect(page.getByRole("heading", { name: "Ask SmartDoc" })).toBeVisible()
+  await page.screenshot({ path: info.outputPath("workspace-desktop.png"), animations: "disabled" })
+  await page.getByRole("link", { name: "Evaluation", exact: true }).click()
+  await expect(page.getByRole("rowheader", { name: "Keyword baseline" })).toBeVisible()
+  await page.getByRole("link", { name: "Settings", exact: true }).click()
+  await page.getByLabel("Color theme").selectOption("dark")
+  await page.getByLabel("Interface animations").uncheck()
+  await page.reload()
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark")
+  await expect(page.locator("html")).toHaveAttribute("data-motion", "off")
+  await page.setViewportSize({ width: 375, height: 760 })
+  await page.getByRole("link", { name: "Ask SmartDoc", exact: true }).click()
+  await expect(page.getByRole("heading", { name: "Ask SmartDoc" })).toBeVisible()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await page.screenshot({ path: info.outputPath("workspace-mobile.png"), animations: "disabled" })
 })

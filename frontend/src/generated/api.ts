@@ -668,6 +668,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/local/evaluation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Report */
+        get: operations["report_api_v1_workspaces_local_evaluation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -789,9 +806,11 @@ export interface components {
              * Status
              * @enum {string}
              */
-            status: "answered" | "insufficient_evidence";
+            status: "answered" | "insufficient_evidence" | "clarification_required";
             /** Answer */
             answer?: string | null;
+            /** Reasoning */
+            reasoning?: string[];
             /** Summary */
             summary?: string[];
             /** Citations */
@@ -946,6 +965,13 @@ export interface components {
             left_revision: components["schemas"]["SnapshotStatus"];
             right_revision: components["schemas"]["SnapshotStatus"];
             changes: components["schemas"]["Page_Change_"];
+            /** Opposing Statements */
+            opposing_statements?: components["schemas"]["OpposingStatements"][];
+            /**
+             * Opposing Truncated
+             * @default false
+             */
+            opposing_truncated: boolean;
         };
         /** Concept */
         Concept: {
@@ -1161,6 +1187,19 @@ export interface components {
             dimensions: number;
             /** Items */
             items: components["schemas"]["EmbeddingItem"][];
+        };
+        /** EvaluationReport */
+        EvaluationReport: {
+            /** Documents */
+            documents: number;
+            /** Queries */
+            queries: number;
+            /** Peak Rss Mib Linux */
+            peak_rss_mib_linux: number;
+            /** Variants */
+            variants: {
+                [key: string]: components["schemas"]["RetrievalMetrics"];
+            };
         };
         /** Evidence */
         Evidence: {
@@ -1574,6 +1613,20 @@ export interface components {
             /** Error Code */
             error_code?: string | null;
         };
+        /** OpposingStatements */
+        OpposingStatements: {
+            /** Subject */
+            subject: string;
+            /**
+             * Relation
+             * @enum {string}
+             */
+            relation: "IS_A" | "PART_OF" | "HAS_PART" | "DEPENDS_ON" | "REQUIRES" | "CAUSED_BY" | "LEADS_TO" | "IMPLEMENTS" | "USES" | "PRODUCES" | "MEASURES" | "COMPARED_WITH" | "CONTRADICTS" | "SUPPORTS" | "DEFINED_BY" | "DERIVED_FROM" | "ASSOCIATED_WITH" | "PRECEDES" | "FOLLOWS" | "INSTANCE_OF" | "HAS_ATTRIBUTE";
+            /** Object */
+            object: string;
+            left: components["schemas"]["Anchor"];
+            right: components["schemas"]["Anchor"];
+        };
         /** Page[AliasReview] */
         Page_AliasReview_: {
             /** Items */
@@ -1723,6 +1776,19 @@ export interface components {
             action: "restore";
             /** Restore Revision */
             restore_revision: number;
+        };
+        /** RetrievalMetrics */
+        RetrievalMetrics: {
+            /** Chunks */
+            chunks: number;
+            /** Mrr At 5 */
+            mrr_at_5: number;
+            /** Recall At 5 */
+            recall_at_5: number;
+            /** P50 Ms */
+            p50_ms: number;
+            /** P95 Ms */
+            p95_ms: number;
         };
         /** RevisionPage */
         RevisionPage: {
@@ -3358,6 +3424,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    report_api_v1_workspaces_local_evaluation_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvaluationReport"];
                 };
             };
         };

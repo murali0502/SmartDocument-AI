@@ -13,6 +13,7 @@ from starlette.exceptions import HTTPException
 
 from smartdoc.api.answers import router as answers_router
 from smartdoc.api.errors import http_error, problem, validation_error
+from smartdoc.api.evaluation import router as evaluation_router
 from smartdoc.api.graph import router as graph_router
 from smartdoc.api.health import router
 from smartdoc.api.ingestion import ingestion_error
@@ -113,6 +114,7 @@ def create_app(
     app.include_router(graph_router)
     app.include_router(retrieval_router)
     app.include_router(answers_router)
+    app.include_router(evaluation_router)
 
     @app.middleware("http")
     async def correlate_request(

@@ -27,6 +27,7 @@ RUN apt-get update \
 WORKDIR /app
 COPY --from=backend /build/.venv /build/.venv
 COPY --from=frontend /build/dist /app/frontend
+COPY scripts/snapshot_workspace.py /app/scripts/snapshot_workspace.py
 ENV SMARTDOC_HOST=0.0.0.0 \
     SMARTDOC_DATABASE_PATH=/data/smartdoc.sqlite3 \
     SMARTDOC_STORAGE_PATH=/data/uploads \

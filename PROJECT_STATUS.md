@@ -228,3 +228,17 @@ Search computes rankings on demand within explicit corpus limits. Persistent ind
 ## Client release
 
 The browser now supports document upload, processing status, scoped questions, and citation inspection. The answer API quotes matching source statements for definitions, requirements, and dependencies. It abstains when a supported, unambiguous statement is unavailable among the retrieved passages. The hosted release retains the existing password gate and persistent SQLite workspace. Broader question interpretation and reasoning remain scoped to the Phase 8 roadmap.
+
+
+## Client release expansion
+
+| Phase | Release evidence |
+|---|---|
+| 8. Reasoning | Source-scoped dependency chains, explicit dates, checked electrical conversions, and clarification when statements conflict. Broader context resolution remains open. |
+| 9. Answering | Deterministic cited answers, representative summaries, and abstention. Path evidence is rechecked against the active document and source offsets. Optional SLM proposal validation remains open. |
+| 10. Document intelligence | Concept revisions, extracted tables and structured fields, summaries, comparison and disconnected concepts in the browser. Direct opposing assertions are surfaced for review. Corpus-wide contradiction adjudication remains open. |
+| 11. Frontend | Ten screens, reusable source views, light and dark themes, responsive layout, keyboard focus and reduced-motion support. |
+| 12. Evaluation | Packaged measured synthetic retrieval benchmark, end-to-end browser tests and PDF citation coverage. Independent corpus-scale evaluation remains open. |
+| 13. Release | Password-gated Docker deployment, secure response headers, health and structured logs, verified snapshot and local restore drill. Independent security signoff and production restore drill remain open. |
+
+See the [client release guide](docs/CLIENT_RELEASE.md) for measured results and operating procedures.
