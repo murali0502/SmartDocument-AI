@@ -103,6 +103,17 @@ class IngestionStore:
             )
             return [(document, job) for document, job in rows]
 
+    def original(self, document_id: str) -> tuple[Path, str] | None:
+        with Session(self.engine) as session:
+            document = session.scalar(
+                select(Document).where(
+                    Document.id == document_id, Document.workspace_id == LOCAL_WORKSPACE_ID
+                )
+            )
+            if document is None:
+                return None
+            return self.original_path(document.sha256), document.filename
+
     def job(self, job_id: str) -> IngestionJob | None:
         with Session(self.engine) as session:
             return session.scalar(

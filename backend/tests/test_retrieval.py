@@ -84,8 +84,14 @@ def test_ask_requires_one_direct_statement_in_selected_document(database, migrat
         "conflict.md",
         "The pump requires a filter. The pump requires a regulator.",
     )
+    negated = model(
+        app,
+        database,
+        "negated.md",
+        "The pump requires a filter. The pump does not require a filter.",
+    )
     with TestClient(app, base_url="http://localhost", client=("127.0.0.1", 50000)) as client:
-        for document_id in (reliable, unrelated, conflict):
+        for document_id in (reliable, unrelated, conflict, negated):
             response = client.post(
                 f"{BASE}/ask",
                 json={

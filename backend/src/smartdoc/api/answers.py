@@ -33,7 +33,7 @@ class Answer(BaseModel):
 PATTERNS = (
     (r"^(?:what does|what do) (.+?) (?:require|need)\??$", r"requires?|needs?"),
     (r"^(?:what does|what do) (.+?) depend on\??$", r"depends? on"),
-    (r"^(?:what is|what are|define) (.+?)\??$", r"means?|refers? to|is defined as|is an?|are"),
+    (r"^(?:what is|what are|define) (.+?)\??$", r"means?|refers? to|is|are"),
 )
 SENTENCE_BREAK = re.compile(r"(?<=[.!?])\s+(?=[A-Z])|\n+")
 
@@ -54,12 +54,21 @@ def ask(question: Question, request: Request, response: Response) -> Answer:
             break
         prefix = rf"^(?:(?:the|a|an) )?{re.escape(subject)}(?: {predicate}) "
         predicate_match = re.compile(prefix)
+        negative_statement = re.compile(
+            rf"^(?:(?:the|a|an) )?{re.escape(subject)} "
+            rf"(?:does not|do not|doesn t|don t) (?:{predicate}) |"
+            rf"^(?:(?:the|a|an) )?{re.escape(subject)} (?:is|are) not "
+        )
         statements: dict[str, tuple[str, SearchHit]] = {}
+        saw_negative = False
         for hit in result.items:
             for fragment in SENTENCE_BREAK.split(hit.evidence.text):
-                if predicate_match.match(" ".join(tokens(fragment))):
-                    statements.setdefault(" ".join(tokens(fragment)), (fragment.strip(), hit))
-        if len(statements) == 1:
+                normalized = " ".join(tokens(fragment))
+                if negative_statement.match(normalized):
+                    saw_negative = True
+                elif predicate_match.match(normalized):
+                    statements.setdefault(normalized, (fragment.strip(), hit))
+        if len(statements) == 1 and not saw_negative:
             excerpt, citation = next(iter(statements.values()))
             return Answer(status="answered", answer=excerpt, citations=[citation])
         break

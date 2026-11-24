@@ -206,6 +206,7 @@ export function Workspace() {
             <textarea id="question" rows={3} maxLength={512} required disabled={asking || sourceBusy}
               placeholder="What does the pump require?" value={question}
               onChange={event => setQuestion(event.target.value)} />
+            <small className="muted">Ask for a definition, requirement, or dependency.</small>
             <button disabled={asking || sourceBusy || !selected || !question.trim()}>{asking ? "Searching…" : "Ask SmartDoc"}</button>
           </form>
           {answerError && <p role="alert">{answerError}</p>}
@@ -213,6 +214,7 @@ export function Workspace() {
             <h3>{answer.status === "answered" ? "Answer" : "Insufficient evidence"}</h3>
             <p>{answer.answer ?? "SmartDoc couldn’t verify a direct answer in this document."}</p>
             {hits.length > 0 && <ul className="citation-list">{hits.map(hit => <li key={hit.chunk_id}>
+              {answer.status !== "answered" && <p className="muted">{hit.evidence.text.slice(0, 240)}{hit.evidence.text.length > 240 && "…"}</p>}
               <button type="button" disabled={asking || sourceBusy} onClick={() => void openSource(hit)}>
                 {answer.status === "answered" ? "Open citation" : "Open related passage"} · {location(hit)}
               </button>
@@ -222,6 +224,7 @@ export function Workspace() {
             <h3>Source excerpt</h3>
             <p className="muted">{source.hit.filename} · {location(source.hit)}</p>
             <blockquote>{source.text}</blockquote>
+            <p><a href={`${api}/documents/${source.hit.document_id}/original`} download>Download original</a></p>
           </section>}
         </section>
       </div>

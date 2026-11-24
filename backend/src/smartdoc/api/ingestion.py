@@ -5,6 +5,7 @@ from urllib.parse import urlsplit
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, Query, Request, Response
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from starlette.requests import ClientDisconnect
 
@@ -230,3 +231,18 @@ def extraction(request: Request, response: Response, document_id: UUID) -> Extra
         raise ExtractionError("extraction_pending", "The extraction result is still pending.")
     response.headers["Cache-Control"] = "no-store"
     return Extraction.model_validate(data)
+
+
+@router.get("/documents/{document_id}/original", response_class=FileResponse)
+def original(request: Request, document_id: UUID) -> FileResponse:
+    store: IngestionStore = request.app.state.ingestion_store
+    result = store.original(str(document_id))
+    if result is None or not result[0].is_file():
+        raise ExtractionError("not_found", "The original document was not found.")
+    path, filename = result
+    return FileResponse(
+        path,
+        filename=filename,
+        media_type="application/octet-stream",
+        headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"},
+    )
