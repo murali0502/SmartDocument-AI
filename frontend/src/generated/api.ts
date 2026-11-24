@@ -668,6 +668,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/local/validate-claim": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Validate Claim */
+        post: operations["validate_claim_api_v1_workspaces_local_validate_claim_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/local/evaluation": {
         parameters: {
             query?: never;
@@ -809,6 +826,8 @@ export interface components {
             status: "answered" | "insufficient_evidence" | "clarification_required";
             /** Answer */
             answer?: string | null;
+            /** Claims */
+            claims?: components["schemas"]["Claim"][];
             /** Reasoning */
             reasoning?: string[];
             /** Summary */
@@ -954,6 +973,28 @@ export interface components {
             primary: components["schemas"]["Evidence"];
             /** Overlap */
             overlap: components["schemas"]["Evidence"][];
+        };
+        /** Claim */
+        Claim: {
+            /** Text */
+            text: string;
+            /**
+             * Method
+             * @enum {string}
+             */
+            method: "extractive" | "calculation" | "graph" | "chronology" | "nli";
+            /** Source Chunk Ids */
+            source_chunk_ids: string[];
+        };
+        /** ClaimProposal */
+        ClaimProposal: {
+            /**
+             * Document Id
+             * Format: uuid
+             */
+            document_id: string;
+            /** Claim */
+            claim: string;
         };
         /** Comparison */
         Comparison: {
@@ -3405,6 +3446,42 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["Question"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Answer"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    validate_claim_api_v1_workspaces_local_validate_claim_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Must be 1. */
+                "X-SmartDoc-Local"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClaimProposal"];
             };
         };
         responses: {

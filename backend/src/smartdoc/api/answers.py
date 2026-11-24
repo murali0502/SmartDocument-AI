@@ -6,9 +6,11 @@ from fastapi import APIRouter, Depends, Request, Response
 from pydantic import BaseModel, Field, StringConstraints
 
 from smartdoc.api.ingestion import require_local
+from smartdoc.api.nlp import LocalHeader, require_model_header
 from smartdoc.api.structure import ready_document
 from smartdoc.ingestion.contracts import Extraction, ExtractionError
 from smartdoc.ncm.contracts import Snapshot
+from smartdoc.nlp.inference import LocalInference
 from smartdoc.persistence.graph_store import GraphStore
 from smartdoc.persistence.ingestion_store import IngestionStore
 from smartdoc.persistence.ncm_store import NcmStore
@@ -39,13 +41,30 @@ class Question(BaseModel):
     document_id: UUID
 
 
+class Claim(BaseModel):
+    text: str
+    method: Literal["extractive", "calculation", "graph", "chronology", "nli"]
+    source_chunk_ids: list[UUID] = Field(min_length=1)
+
+
 class Answer(BaseModel):
     status: Literal["answered", "insufficient_evidence", "clarification_required"]
     answer: str | None = None
+    claims: list[Claim] = Field(default_factory=list)
     reasoning: list[str] = Field(default_factory=list)
     summary: list[str] = Field(default_factory=list)
     citations: list[SearchHit] = Field(default_factory=list)
     related_passages: list[SearchHit] = Field(default_factory=list)
+
+
+def supported_claim(
+    text: str,
+    method: Literal["extractive", "calculation", "graph", "chronology", "nli"],
+    *hits: SearchHit,
+) -> Claim:
+    return Claim(
+        text=text, method=method, source_chunk_ids=list(dict.fromkeys(hit.chunk_id for hit in hits))
+    )
 
 
 # Supported questions require the subject to occur before an explicit predicate.
@@ -152,9 +171,18 @@ def direct_answer(
                 if converted is None:
                     return Answer(status="insufficient_evidence", related_passages=[citation])
                 return Answer(
-                    status="answered", answer=converted, reasoning=[excerpt], citations=[citation]
+                    status="answered",
+                    answer=converted,
+                    reasoning=[excerpt],
+                    citations=[citation],
+                    claims=[supported_claim(converted, "calculation", citation)],
                 )
-            return Answer(status="answered", answer=excerpt, citations=[citation])
+            return Answer(
+                status="answered",
+                answer=excerpt,
+                citations=[citation],
+                claims=[supported_claim(excerpt, "extractive", citation)],
+            )
         if len(statements) > 1 or saw_negative and statements:
             return Answer(
                 status="clarification_required",
@@ -180,11 +208,13 @@ def compare_answers(answers: list[Answer], *, timeline: bool) -> Answer:
             related_passages=list(citations.values())[:4],
         )
     values = [answer.answer for answer in answers if answer.answer]
+    claims = [claim for answer in answers for claim in answer.claims]
     if not timeline:
         return Answer(
             status="answered",
             answer="The document states:",
             reasoning=values,
+            claims=claims,
             citations=list(citations.values()),
         )
     # Compare only stated years or full ISO dates. Year intervals preserve date precision.
@@ -205,6 +235,10 @@ def compare_answers(answers: list[Answer], *, timeline: bool) -> Answer:
         status="answered",
         answer="The first event occurred earlier.",
         reasoning=[first, second],
+        claims=[
+            *claims,
+            supported_claim(f"{first} precedes: {second}", "chronology", *citations.values()),
+        ],
         citations=list(citations.values()),
     )
 
@@ -233,7 +267,14 @@ def summarize(request: Request, response: Response, document_id: UUID) -> Answer
     if not summary:
         return Answer(status="insufficient_evidence")
     return Answer(
-        status="answered", answer="\n".join(summary), summary=summary, citations=citations
+        status="answered",
+        answer="\n".join(summary),
+        summary=summary,
+        citations=citations,
+        claims=[
+            supported_claim(excerpt, "extractive", hit)
+            for excerpt, hit in zip(summary, citations, strict=True)
+        ],
     )
 
 
@@ -276,6 +317,7 @@ def explain_relationship(
     structures: StructureStore = request.app.state.structure_store
     citations: dict[UUID, SearchHit] = {}
     reasoning = []
+    claims = []
     for step in path.steps:
         edge, anchor = step.edge, step.evidence
         linked = structures.source(state.job_id, anchor.chunk_id)
@@ -304,7 +346,9 @@ def explain_relationship(
         except ExtractionError:
             return Answer(status="insufficient_evidence")
         relation = edge.predicate.lower().replace("_", " ")
-        reasoning.append(f"{nodes[edge.source_id].label} {relation} {nodes[edge.target_id].label}.")
+        statement = f"{nodes[edge.source_id].label} {relation} {nodes[edge.target_id].label}."
+        reasoning.append(statement)
+        claims.append(supported_claim(statement, "graph", citations[chunk.id]))
     return Answer(
         status="answered",
         answer=(
@@ -313,6 +357,7 @@ def explain_relationship(
             else "The document supports these connections."
         ),
         reasoning=reasoning,
+        claims=claims,
         citations=list(citations.values()),
     )
 
@@ -331,4 +376,44 @@ def cited_chunk(document_id: UUID, filename: str, chunk: Chunk, manifest: Extrac
         source_url=f"/api/v1/workspaces/local/documents/{document_id}/chunks/{chunk.id}/source",
         score=0,
         method_scores={},
+    )
+
+
+class ClaimProposal(BaseModel):
+    document_id: UUID
+    claim: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=512)]
+
+
+@router.post("/validate-claim")
+def validate_claim(
+    proposal: ClaimProposal,
+    request: Request,
+    response: Response,
+    local_header: LocalHeader = None,
+) -> Answer:
+    require_model_header(local_header, response)
+    retrieval: RetrievalService = request.app.state.retrieval
+    hits = retrieval.search(
+        SearchQuery(query=proposal.claim, document_ids=[proposal.document_id], limit=6)
+    ).items
+    if not hits:
+        return Answer(status="insufficient_evidence")
+    inference: LocalInference = request.app.state.local_inference
+    scores, truncated = inference.infer([(hit.evidence.text, proposal.claim) for hit in hits])
+    supported = []
+    opposing = []
+    for hit, score, incomplete in zip(hits, scores, truncated, strict=True):
+        if incomplete:
+            continue
+        if score["contradiction"] >= 0.75:
+            opposing.append(hit)
+        elif score["entailment"] >= 0.9:
+            supported.append(hit)
+    if opposing or not supported:
+        return Answer(status="insufficient_evidence", related_passages=opposing or hits[:3])
+    return Answer(
+        status="answered",
+        answer=proposal.claim,
+        citations=supported,
+        claims=[supported_claim(proposal.claim, "nli", *supported)],
     )

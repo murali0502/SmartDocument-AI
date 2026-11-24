@@ -281,3 +281,40 @@ def test_decomposed_comparison_temporal_order_and_relationship(database, migrati
         for result in (compared, related, ordered):
             for hit in result["citations"]:
                 assert client.get(hit["source_url"]).json()["primary"] == hit["evidence"]
+
+
+def test_claim_validation_requires_opt_in_and_abstains_on_conflict(
+    database, migration, monkeypatch
+):
+    command.upgrade(migration, "head")
+    app = create_app(Settings(database_path=database, ingestion_worker=False))
+    document = model(
+        app,
+        database,
+        "claim.md",
+        "The pump requires a filter.\n\nThe pump does not require a filter.",
+    )
+    body = {"document_id": document, "claim": "The pump requires a filter."}
+    url = f"{BASE}/validate-claim"
+    headers = {"X-SmartDoc-Local": "1"}
+
+    def inference(pairs):
+        return [
+            {"entailment": 0.98, "contradiction": 0.01}
+            if "does not" not in premise
+            else {"entailment": 0.01, "contradiction": 0.98}
+            for premise, _ in pairs
+        ], [False] * len(pairs)
+
+    monkeypatch.setattr(app.state.local_inference, "infer", inference)
+    with TestClient(app, base_url="http://localhost", client=("127.0.0.1", 50000)) as client:
+        assert client.post(url, json=body).status_code == 403
+        refused = client.post(url, json=body, headers=headers)
+        assert refused.json()["status"] == "insufficient_evidence"
+        assert refused.json()["claims"] == []
+        question = {"document_id": document, "question": "Summary of this document"}
+        answer = client.post(f"{BASE}/ask", json=question).json()
+        sources = {item["chunk_id"]: item["evidence"]["text"] for item in answer["citations"]}
+        assert answer["claims"]
+        for claim in answer["claims"]:
+            assert claim["text"] in sources[claim["source_chunk_ids"][0]]

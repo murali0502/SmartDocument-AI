@@ -246,3 +246,7 @@ See the [client release guide](docs/CLIENT_RELEASE.md) for measured results and 
 ### Phase 8 reasoning increment
 
 Added structured question plans for section constraints, two-concept comparisons, stated-date ordering, and directed or undirected source-backed graph paths. Graph questions now link both canonical concepts and accepted aliases against the active snapshot. Ambiguous aliases, unresolved comparisons and overlapping date intervals produce clarification. Exact electrical conversions reject ambiguous ranges and incompatible units. The integration suite verifies independently cited comparisons, paths and chronology, including incomplete date precision. Supported patterns remain English and deliberately bounded.
+
+### Phase 9 answer and evidence increment
+
+Answer responses now map extractive statements, checked conversions, graph steps, and temporal conclusions to their supporting chunk IDs. Unsupported or conflicting propositions abstain. The opt-in local claim checker uses the pinned NLI model, rejects truncated inputs, and abstains when retrieved evidence contradicts a proposal. The default answer flow stays model-free. The pinned model accepted a supported paraphrase and rejected its negation in an isolated integration run. This verifies the integration on two cases.
