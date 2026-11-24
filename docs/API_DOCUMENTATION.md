@@ -45,7 +45,7 @@ Invoke-RestMethod -Uri "$api/documents/$($upload.document.id)/extraction" |
   ConvertTo-Json -Depth 20
 ```
 
-The receipt records filename, format, byte length and SHA-256. Locators use one-based page, slide, block and CSV row indices. Workbook cells use A1 references. PDF page sizes use points. OCR word boxes use raster pixels with a top-left origin and carry confidence and engine version. Native page text remains in `text`. OCR is in `data.ocr`. The extraction metadata records whether Bubblewrap or a standalone process isolated the parser.
+The receipt records filename, format, byte length and SHA-256. Locators use one-based page, slide, block and CSV row indices. Workbook cells use A1 references. PDF page sizes use points. Native page text stays in `text`. Scanned PDF pages and image frames are marked by `data.vision_scan`. Ask SmartDoc returns visual citations that link to authenticated page images. Older extraction records may contain `data.ocr` for existing citations. The extraction metadata records whether Bubblewrap or a standalone process isolated the parser.
 
 ## Document structure and chunks
 

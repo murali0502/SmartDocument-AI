@@ -35,6 +35,7 @@ from smartdoc.persistence.nlp_store import NlpStore
 from smartdoc.persistence.readiness import DatabaseReadiness
 from smartdoc.persistence.structure_store import StructureStore
 from smartdoc.retrieval.service import RetrievalService
+from smartdoc.retrieval.vision import VisionModel
 
 logger = logging.getLogger(__name__)
 
@@ -103,6 +104,11 @@ def create_app(
         engine, pipeline.key, concepts.key, graph.scope, app.state.local_inference
     )
     app.state.settings = settings
+    app.state.vision = (
+        VisionModel(settings.vision_url, settings.vision_model, settings.vision_timeout)
+        if settings.vision_url and settings.vision_model
+        else None
+    )
     app.add_exception_handler(ExtractionError, ingestion_error)
     app.add_exception_handler(HTTPException, http_error)
     app.add_exception_handler(RequestValidationError, validation_error)

@@ -1,5 +1,4 @@
 import io
-import shutil
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from hashlib import sha256
@@ -181,9 +180,7 @@ def test_formats(local, format):
 
 
 @pytest.mark.parametrize("format", ["pdf", "png", "jpeg", "tiff"])
-def test_real_ocr(local, format):
-    if not shutil.which("tesseract"):
-        pytest.skip("Tesseract is not installed.")
+def test_visual_upload_preserves_page_without_ocr(local, format):
     client, worker = local
     with Image.new("RGB", (1050, 270), "white") as image:
         draw = ImageDraw.Draw(image)
@@ -201,16 +198,11 @@ def test_real_ocr(local, format):
     unit = client.get(f"{BASE}/documents/{doc_id}/extraction").json()["units"][0]
     assert unit["locator"]["page"] == 1
     assert unit["text"] == ""
-    ocr = unit["data"]["ocr"]
-    assert "Pump requires a filter" in ocr["text"]
-    assert ocr["coordinate_unit"] == "pixel"
-    assert ocr["engine_version"].startswith("tesseract ")
-    assert all(0 <= w["confidence"] <= 100 and w["width"] > 0 for w in ocr["words"])
+    assert unit["data"]["vision_scan"] is True
+    assert "ocr" not in unit["data"]
 
 
-def test_mixed_pdf_uses_ocr_only_on_scanned_page(local):
-    if not shutil.which("tesseract"):
-        pytest.skip("Tesseract is not installed.")
+def test_mixed_pdf_indexes_embedded_text_and_marks_image_page(local):
     client, worker = local
     output = io.BytesIO()
     canvas = Canvas(output)
@@ -234,11 +226,11 @@ def test_mixed_pdf_uses_ocr_only_on_scanned_page(local):
     assert "ocr" not in first["data"]
     assert second["locator"]["page"] == 2
     assert second["text"] == ""
-    assert "Filter replacement" in second["data"]["ocr"]["text"]
+    assert second["data"]["vision_scan"] is True
+    assert "ocr" not in second["data"]
 
 
-def test_missing_ocr_is_an_explicit_failure(local, monkeypatch):
-    monkeypatch.setenv("SMARTDOC_TESSERACT", "smartdoc-missing-tesseract-binary")
+def test_missing_vision_model_is_an_explicit_answer_failure(local):
     client, worker = local
     with Image.new("RGB", (50, 50), "white") as image:
         output = io.BytesIO()
@@ -247,8 +239,16 @@ def test_missing_ocr_is_an_explicit_failure(local, monkeypatch):
     assert response.status_code == 202
     assert worker.run_one()
     result = client.get(response.headers["Location"]).json()
-    assert result["status"] == "failed"
-    assert result["error_code"] == "ocr_unavailable"
+    assert result["status"] == "succeeded"
+    answer = client.post(
+        f"{BASE}/ask",
+        json={
+            "document_id": response.json()["document"]["id"],
+            "question": "What is shown?",
+        },
+    )
+    assert answer.status_code == 503, answer.text
+    assert answer.json()["code"] == "vision_unavailable"
 
 
 def test_duplicate_requests_and_restart(local, database):

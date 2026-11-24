@@ -58,7 +58,7 @@ The hosted app uses a single shared workspace. Anyone with the password can acce
 
 ## Ingest a document
 
-Use the [ingestion API guide](docs/API_DOCUMENTATION.md#document-ingestion) to upload a file, check its job, and fetch the extraction. The API starts a local ingestion worker automatically. Install Tesseract with English language data to process scanned PDFs and images. Native documents use their format-specific parsers.
+Use the [ingestion API guide](docs/API_DOCUMENTATION.md#document-ingestion) to upload a file, check its job, and fetch the extraction. The API starts a local ingestion worker automatically. Native documents use their format-specific parsers. Scanned PDFs and images use a configured private vision-language model for questions.
 
 ## Inspect document structure
 
@@ -76,7 +76,7 @@ Phase 5 builds concepts, aliases, hierarchy links and evidence-backed relationsh
 
 Phase 6 publishes a collection graph with source-backed edges and immutable revisions. The [graph API guide](docs/API_DOCUMENTATION.md#knowledge-graph) covers neighborhood, path, evidence and analytics requests.
 
-The hosted build uses Tesseract’s pinned higher-accuracy English weights for scanned pages. PDF scans are rendered at higher resolution within the existing pixel budget, and uncertain text lines can receive a bounded second pass. The improved OCR runs on new ingestion jobs. Identical uploads are deduplicated, so a previously processed scan needs a freshly exported copy to run through the new OCR. Handwriting accuracy still depends on the scan.
+See the [vision setup guide](docs/CLIENT_RELEASE.md#visual-qa-for-scans-and-images) for connecting the model server.
 
 ## Ask a question
 

@@ -215,7 +215,7 @@ export function Workspace() {
             <textarea id="question" rows={3} maxLength={512} required disabled={asking || sourceBusy}
               placeholder="What does the pump require?" value={question}
               onChange={event => setQuestion(event.target.value)} />
-            <small className="muted">Try a summary, a definition, a dependency chain, a date, or a unit conversion.</small>
+            <small className="muted">Try a summary, definition, or comparison. Scans and images use visual analysis.</small>
             <button className="primary-button" disabled={asking || sourceBusy || !activeDocument || !question.trim()}>{asking ? "Searching…" : "Ask SmartDoc"}</button>
           </form>
           {answerError && <p role="alert">{answerError}</p>}
@@ -224,6 +224,12 @@ export function Workspace() {
             {answer.summary?.length
               ? <ul>{answer.summary.map((excerpt, index) => <li key={index}>{excerpt}</li>)}</ul>
               : <p>{answer.answer ?? "SmartDoc couldn’t verify a direct answer in this document."}</p>}
+            {answer.visual_citations?.length ? <ul className="citation-list">
+              {answer.visual_citations.map((citation, index) => <li key={index}>
+                <blockquote className="evidence-block">{citation.excerpt}<footer>Model transcription</footer></blockquote>
+                <a href={citation.image_url} target="_blank" rel="noreferrer">Open original page {citation.page}</a>
+              </li>)}
+            </ul> : null}
             {answer.reasoning?.length ? <ol className="reasoning-list">{answer.reasoning.map((step, index) =>
               <li key={index}>{step}</li>)}</ol> : null}
             {answer.claims?.length ? <details className="explore-row">

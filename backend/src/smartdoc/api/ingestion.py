@@ -134,6 +134,7 @@ async def ingestion_error(request: Request, error: ExtractionError) -> Response:
         "retrieval_limit": 422,
         "revision_conflict": 409,
         "model_unavailable": 503,
+        "vision_unavailable": 503,
     }.get(error.code, 400)
     return problem(request, status, error.code, str(error))
 

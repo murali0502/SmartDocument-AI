@@ -1,7 +1,9 @@
+from ipaddress import ip_address
 from pathlib import Path
 from typing import Literal
+from urllib.parse import urlsplit
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from smartdoc.ncm.contracts import Weights
@@ -23,6 +25,39 @@ class Settings(BaseSettings):
     max_upload_bytes: int = Field(default=20 * 1024 * 1024, ge=1, le=64 * 1024 * 1024)
     processing_timeout: int = Field(default=90, ge=5, le=180)
     ingestion_worker: bool = True
+    vision_url: str | None = None
+    vision_model: str | None = None
+    vision_max_pages: int = Field(default=8, ge=1, le=16)
+    vision_timeout: int = Field(default=90, ge=5, le=180)
+
+    @model_validator(mode="after")
+    def validate_vision_endpoint(self) -> "Settings":
+        if bool(self.vision_url) != bool(self.vision_model):
+            raise ValueError("Configure both SMARTDOC_VISION_URL and SMARTDOC_VISION_MODEL.")
+        if self.vision_url:
+            url = urlsplit(self.vision_url)
+            host = url.hostname or ""
+            private = host == "localhost" or host.endswith(".railway.internal")
+            try:
+                address = ip_address(host)
+                private = address.is_loopback or (
+                    address.is_private
+                    and not address.is_unspecified
+                    and not address.is_link_local
+                    and not address.is_multicast
+                )
+            except ValueError:
+                pass
+            if (
+                not private
+                or url.scheme not in {"http", "https"}
+                or url.username is not None
+                or url.query
+                or url.fragment
+            ):
+                raise ValueError("The vision endpoint must be on the private network.")
+        return self
+
     nlp_profile: Profile = "rules"
     nlp_model_dir: Path = DEFAULT_MODELS
     nlp_terms: dict[str, list[str]] = Field(default_factory=dict)

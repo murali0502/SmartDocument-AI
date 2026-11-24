@@ -37,3 +37,18 @@ Run the benchmark from the repository root with `uv run --project backend --froz
 4. Run the automated hosted restore test. For an operations rehearsal, restore an approved snapshot into an isolated Railway service and compare document and citation results before considering a cutover.
 
 The automated restore test snapshots an active hosted fixture, starts a separate application on the restored copy, and checks access control, original bytes, and citation fidelity. It uses temporary storage and no production documents.
+
+## Visual Q&A for scans and images
+
+Configure a trusted, self-hosted vision model that accepts OpenAI-compatible chat completions, image data URLs, and JSON responses. For a model server running on the same machine as the API, the settings look like this:
+
+```sh
+SMARTDOC_VISION_URL=http://127.0.0.1:11434/v1/chat/completions
+SMARTDOC_VISION_MODEL=qwen2.5vl:7b
+```
+
+Use the model name installed on your server. For Railway, use the model service's private address in the same environment. The app accepts only loopback or private endpoints, disables proxy forwarding and redirects, and does not download a model. Configure model capacity and `SMARTDOC_VISION_TIMEOUT` to fit your hardware.
+
+Scanned PDF pages and image uploads use visual Q&A from the stored originals. The model receives numbered PDF page images or image frames and returns an answer plus page references. The app checks that cited page numbers belong to the images sent and links to the original images. Model transcriptions and answers may still contain reading errors. The default page limit is eight, configurable via `SMARTDOC_VISION_MAX_PAGES` up to sixteen.
+
+This path handles single-document Ask SmartDoc requests. It does not create an index from the model's answers, so Search, Concepts, and Knowledge Graph use native text and any previously saved OCR, rather than new image-only pages. Without a configured model, visual questions return an explicit model setup error. Before changing production settings, verify the page 1 definition and page 3 indicator table in the chemistry scan against the original page images.
