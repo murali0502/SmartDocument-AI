@@ -1,70 +1,70 @@
 {
   "documents": 6,
   "queries": 8,
-  "peak_rss_mib_linux": 97.7,
+  "peak_rss_mib_linux": 97.8,
   "variants": {
     "bm25": {
       "chunks": 17,
       "mrr_at_5": 0.75,
       "recall_at_5": 0.875,
-      "p50_ms": 1.92,
-      "p95_ms": 3.23
+      "p50_ms": 1.84,
+      "p95_ms": 3.04
     },
     "structure": {
       "chunks": 17,
       "mrr_at_5": 0.188,
       "recall_at_5": 0.5,
-      "p50_ms": 1.52,
-      "p95_ms": 1.73
+      "p50_ms": 1.48,
+      "p95_ms": 1.7
     },
     "concept": {
       "chunks": 17,
       "mrr_at_5": 0.312,
       "recall_at_5": 0.375,
-      "p50_ms": 2.99,
-      "p95_ms": 47.67
+      "p50_ms": 3.42,
+      "p95_ms": 52.03
     },
     "graph": {
       "chunks": 17,
       "mrr_at_5": 0.25,
       "recall_at_5": 0.25,
-      "p50_ms": 3.78,
-      "p95_ms": 8.52
+      "p50_ms": 4.12,
+      "p95_ms": 5.44
     },
     "bm25_structure": {
       "chunks": 17,
       "mrr_at_5": 0.688,
       "recall_at_5": 1.0,
-      "p50_ms": 1.9,
-      "p95_ms": 2.26
+      "p50_ms": 1.91,
+      "p95_ms": 6.09
     },
     "bm25_structure_concept": {
       "chunks": 17,
       "mrr_at_5": 0.667,
       "recall_at_5": 1.0,
-      "p50_ms": 3.1,
-      "p95_ms": 3.74
+      "p50_ms": 3.62,
+      "p95_ms": 4.0
     },
     "fusion": {
       "chunks": 17,
       "mrr_at_5": 0.625,
       "recall_at_5": 1.0,
-      "p50_ms": 4.53,
-      "p95_ms": 5.08
+      "p50_ms": 5.06,
+      "p95_ms": 7.79
     },
     "reranked": {
       "chunks": 17,
       "mrr_at_5": 0.729,
       "recall_at_5": 1.0,
-      "p50_ms": 4.67,
-      "p95_ms": 5.92
+      "p50_ms": 5.04,
+      "p95_ms": 5.72
     },
     "diverse": {
       "chunks": 17,
       "mrr_at_5": 0.708,
       "recall_at_5": 1.0,
-      "p50_ms": 4.58,
-      "p95_ms": 5.22
+      "p50_ms": 4.79,
+      "p95_ms": 5.73
     }
   }
 }

@@ -258,3 +258,15 @@ Ask can compare two concepts or event dates across explicitly selected documents
 ### Phase 11 browser integration increment
 
 Ask SmartDoc now exposes a second document selector and per-claim source inspection. The Chromium workflow compares two real uploaded documents, expands the evidence mapping and opens the second document’s cited passage. Existing browser checks cover the PDF, table extraction, search, graph navigation, evaluation, and appearance settings.
+
+### Phase 12 evaluation increment
+
+The full backend suite passed 81 tests with the pinned spaCy, embedding, and NLI models enabled. Four Chromium scenarios passed. npm and the locked Python runtime dependency audit reported no known vulnerabilities.
+
+| Fixture | Result |
+|---|---|
+| Retrieval with 6 documents and 17 passages | Model-free reranking reached 100% recall@5, 0.729 MRR@5, 5.04 ms server median and 5.72 ms p95. Peak benchmark-process memory was 97.8 MiB. |
+| Retrieval with 30 documents and 65 passages | Model-free reranking reached 100% recall@5 and 8.13 ms median. Dense search reached 100% recall@5, 0.854 MRR@5, and 166.2 ms median. Peak benchmark-process memory including dense search was 207.3 MiB. |
+| NCM with 7 labeled documents | Rules achieved 0.923 concept F1 and 0.941 relation F1 with 77 verified anchors. The optional spaCy profile achieved 0.955 concept F1 and 0.875 relation F1 with 119 verified anchors. |
+
+The retrieval benchmark verifies every returned excerpt against its source endpoint. These synthetic fixtures exercise the workflows and quantify trade-offs. Independent validation on a representative client corpus remains an acceptance activity.

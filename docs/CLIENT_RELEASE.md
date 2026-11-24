@@ -25,6 +25,6 @@ Start a separate service against the restored SQLite file and uploads directory.
 
 ## Evidence and limits
 
-On the frozen synthetic fixture (six documents, eight questions, 17 chunks), the keyword baseline achieved 87.5% recall@5 and 0.750 MRR@5. Model-free reranked search achieved 100% recall@5 and 0.729 MRR@5. The measured service-side median was 4.67 ms for reranked search, with peak benchmark-process memory of 97.7 MiB. The fixture is an engineering check. It does not establish accuracy or capacity on the client’s corpus.
+On the frozen synthetic fixture (six documents, eight questions, 17 chunks), the keyword baseline achieved 87.5% recall@5 and 0.750 MRR@5. Model-free reranked search achieved 100% recall@5 and 0.729 MRR@5. The measured service-side median was 5.04 ms for reranked search, with peak benchmark-process memory of 97.8 MiB. The fixture is an engineering check. It does not establish accuracy or capacity on the client’s corpus.
 
 Run the benchmark from the repository root with `uv run --project backend --frozen python scripts/eval_retrieval.py`. Review broad multilingual accuracy, optional model-assisted answer validation, large-corpus performance, and formal independent security assessment separately from this release.
