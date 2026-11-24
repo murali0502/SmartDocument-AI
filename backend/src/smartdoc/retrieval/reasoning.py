@@ -1,18 +1,16 @@
 import re
+from datetime import date
 from decimal import Decimal, localcontext
 from uuid import UUID
 
 from smartdoc.graph.analysis import shortest_path
 from smartdoc.graph.contracts import GraphNode, GraphPath
 from smartdoc.ingestion.contracts import ExtractionError
+from smartdoc.ncm.contracts import Snapshot
 from smartdoc.persistence.graph_queries import Filters, GraphQueries
 from smartdoc.persistence.graph_store import GraphStore
 from smartdoc.retrieval.ranking import tokens
 
-DEPENDENCY_REQUEST = re.compile(
-    r"(?:how does|does) (.+?) depend(?: directly or indirectly)? on (.+?)[?.]?",
-    re.IGNORECASE,
-)
 CONVERSION_REQUEST = re.compile(
     r"(?:what is|convert) (.+?) (?:in|to) (mV|kV|V|mA|A|mW|kW|W|mΩ|kΩ|Ω)[?.]?",
     re.IGNORECASE,
@@ -36,6 +34,8 @@ QUANTITY = re.compile(
 
 
 def convert_stated_quantity(excerpt: str, target: str) -> str | None:
+    if re.search(r"\d\s*(?:[–—-]|\bto\b)\s*[+−-]?\d", excerpt):
+        return None
     quantities = QUANTITY.findall(excerpt)
     if len(quantities) != 1 or target not in UNITS:
         return None
@@ -53,21 +53,35 @@ def convert_stated_quantity(excerpt: str, target: str) -> str | None:
     return f"{rendered} {target}"
 
 
-def concept_matches(graph: GraphQueries, label: str, document_id: UUID) -> list[GraphNode]:
+def concept_matches(snapshot: Snapshot, label: str) -> set[UUID]:
     label = " ".join(tokens(label)).removeprefix("the ").removeprefix("a ").removeprefix("an ")
-    if not label:
-        return []
-    return [
-        node
-        for _, node in graph.nodes(0, 101, document_id, query=label)
-        if node.kind not in {"document", "section", "chunk", "definition"}
-        and " ".join(tokens(node.label)) == label
-    ]
+    matches = {
+        concept.id
+        for concept in snapshot.concepts
+        if any(
+            " ".join(tokens(name)) == label
+            for name in [
+                concept.label,
+                *(alias.surface for alias in concept.aliases),
+            ]
+        )
+    }
+    for ambiguous in snapshot.ambiguous_aliases:
+        if " ".join(tokens(ambiguous.surface)) == label:
+            matches.update(ambiguous.alternatives)
+    return matches
 
 
-def dependency_path(
-    storage: GraphStore, document_id: UUID, source: str, target: str, snapshot_id: str
+def relationship_path(
+    storage: GraphStore,
+    snapshot: Snapshot,
+    source: str,
+    target: str,
+    snapshot_id: str,
+    *,
+    dependencies: bool,
 ) -> tuple[GraphPath | None, dict[UUID, GraphNode], bool]:
+    document_id = snapshot.document_id
     try:
         revision = storage.load()
     except ExtractionError as error:
@@ -80,20 +94,41 @@ def dependency_path(
     ):
         return None, {}, False
     graph = GraphQueries(storage.engine, revision.id)
-    first = concept_matches(graph, source, document_id)
-    last = concept_matches(graph, target, document_id)
+    first = concept_matches(snapshot, source)
+    last = concept_matches(snapshot, target)
     if len(first) > 1 or len(last) > 1:
         return None, {}, True
-    if not first or not last or first[0].id == last[0].id:
+    if not first or not last or first == last:
         return None, {}, False
     path = shortest_path(
         graph,
-        first[0].id,
-        last[0].id,
-        "out",
+        next(iter(first)),
+        next(iter(last)),
+        "out" if dependencies else "both",
         4,
-        Filters(document_id=document_id, view="dependencies", validation="source_validated"),
+        Filters(
+            document_id=document_id,
+            kind="assertion",
+            view="dependencies" if dependencies else "semantic",
+            validation="source_validated",
+        ),
     )
     if path.status != "found" or not path.steps:
         return None, {}, False
     return path, graph.nodes_by_id(set(path.node_ids), document_id), False
+
+
+def stated_date_interval(excerpt: str) -> tuple[date, date] | None:
+    matches = re.findall(r"\b([0-9]{4})(-[0-9]{2}-[0-9]{2})?\b", excerpt)
+    if len(matches) != 1:
+        return None
+    year, precision = matches[0]
+    try:
+        if precision:
+            day = date.fromisoformat(year + precision)
+            return day, day
+        if re.search(r"\b(?:on|in)\s+" + year + r"\b(?![-/])", excerpt, re.IGNORECASE):
+            return date(int(year), 1, 1), date(int(year), 12, 31)
+    except ValueError:
+        pass
+    return None

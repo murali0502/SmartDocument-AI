@@ -8,18 +8,20 @@ from pydantic import BaseModel, Field, StringConstraints
 from smartdoc.api.ingestion import require_local
 from smartdoc.api.structure import ready_document
 from smartdoc.ingestion.contracts import Extraction, ExtractionError
+from smartdoc.ncm.contracts import Snapshot
 from smartdoc.persistence.graph_store import GraphStore
 from smartdoc.persistence.ingestion_store import IngestionStore
 from smartdoc.persistence.ncm_store import NcmStore
 from smartdoc.persistence.structure_store import StructureStore
 from smartdoc.retrieval.contracts import SearchHit, SearchQuery
+from smartdoc.retrieval.questions import plan_question
 from smartdoc.retrieval.ranking import STOP, tokens
 from smartdoc.retrieval.reasoning import (
     CONVERSION_REQUEST,
-    DEPENDENCY_REQUEST,
     UNITS,
     convert_stated_quantity,
-    dependency_path,
+    relationship_path,
+    stated_date_interval,
 )
 from smartdoc.retrieval.service import MAX_CHUNKS, RetrievalService
 from smartdoc.retrieval.summary import SUMMARY_REQUEST, representative_excerpts
@@ -47,7 +49,6 @@ class Answer(BaseModel):
 
 
 # Supported questions require the subject to occur before an explicit predicate.
-SECTION_REQUEST = re.compile(r'(.+?) in section ["“]?([^?"”]+)["”]?\??', re.IGNORECASE)
 PATTERNS = (
     (r"^(?:what does|what do) (.+?) (?:require|need)\??$", r"requires?|needs?"),
     (r"^(?:what does|what do) (.+?) depend on\??$", r"depends? on"),
@@ -64,16 +65,45 @@ def ask(question: Question, request: Request, response: Response) -> Answer:
     response.headers["Cache-Control"] = "no-store"
     if SUMMARY_REQUEST.fullmatch(question.question):
         return summarize(request, response, question.document_id)
-    if dependency := DEPENDENCY_REQUEST.fullmatch(question.question):
-        return explain_dependency(request, response, question.document_id, *dependency.groups())
-    qualified = SECTION_REQUEST.fullmatch(question.question)
-    question_text = qualified[1] if qualified else question.question
-    section = " ".join(tokens(qualified[2])) if qualified else ""
+    plan = plan_question(question.question)
+    retrieval: RetrievalService = request.app.state.retrieval
+    if plan.intent in {"dependency", "relationship"}:
+        if plan.section:
+            return Answer(
+                status="clarification_required",
+                answer="Graph paths cover the whole document. Ask a direct question for a section.",
+            )
+        return explain_relationship(
+            request,
+            response,
+            question.document_id,
+            *plan.concepts,
+            dependencies=plan.intent == "dependency",
+        )
+    if plan.intent in {"comparison", "timeline"}:
+        prompts = [
+            f"When was {concept} {plan.action}?"
+            if plan.intent == "timeline"
+            else f"What is {concept}?"
+            for concept in plan.concepts
+        ]
+        return compare_answers(
+            [
+                direct_answer(retrieval, question.document_id, prompt, plan.section)
+                for prompt in prompts
+            ],
+            timeline=plan.intent == "timeline",
+        )
+    return direct_answer(retrieval, question.document_id, plan.text, plan.section)
+
+
+def direct_answer(
+    retrieval: RetrievalService, document_id: UUID, question_text: str, section: str
+) -> Answer:
     conversion = CONVERSION_REQUEST.fullmatch(question_text)
     prompt = f"What is {conversion[1]}?" if conversion else question_text
-    retrieval: RetrievalService = request.app.state.retrieval
     result = retrieval.search(
-        SearchQuery(query=prompt, document_ids=[question.document_id], limit=50 if section else 10)
+        SearchQuery(query=prompt, document_ids=[document_id], limit=50 if section else 10)
     )
     passages = [
         hit
@@ -138,6 +168,47 @@ def ask(question: Question, request: Request, response: Response) -> Answer:
     return Answer(status="insufficient_evidence", related_passages=passages[:3])
 
 
+def compare_answers(answers: list[Answer], *, timeline: bool) -> Answer:
+    citations: dict[UUID, SearchHit] = {}
+    for answer in answers:
+        for hit in [*answer.citations, *answer.related_passages]:
+            citations[hit.chunk_id] = hit
+    if any(answer.status != "answered" or not answer.answer for answer in answers):
+        return Answer(
+            status="clarification_required",
+            answer="Check the names or add a section so I can find evidence for both sides.",
+            related_passages=list(citations.values())[:4],
+        )
+    values = [answer.answer for answer in answers if answer.answer]
+    if not timeline:
+        return Answer(
+            status="answered",
+            answer="The document states:",
+            reasoning=values,
+            citations=list(citations.values()),
+        )
+    # Compare only stated years or full ISO dates. Year intervals preserve date precision.
+    ranges = [stated_date_interval(value) for value in values]
+    if ranges[0] is None or ranges[1] is None:
+        return Answer(status="insufficient_evidence", related_passages=list(citations.values()))
+    if ranges[0][1] < ranges[1][0]:
+        first, second = values
+    elif ranges[1][1] < ranges[0][0]:
+        second, first = values
+    else:
+        return Answer(
+            status="clarification_required",
+            answer="The stated dates overlap at their recorded precision.",
+            related_passages=list(citations.values()),
+        )
+    return Answer(
+        status="answered",
+        answer="The first event occurred earlier.",
+        reasoning=[first, second],
+        citations=list(citations.values()),
+    )
+
+
 def summarize(request: Request, response: Response, document_id: UUID) -> Answer:
     state = ready_document(request, response, document_id)
     structures: StructureStore = request.app.state.structure_store
@@ -166,16 +237,29 @@ def summarize(request: Request, response: Response, document_id: UUID) -> Answer
     )
 
 
-def explain_dependency(
-    request: Request, response: Response, document_id: UUID, source: str, target: str
+def explain_relationship(
+    request: Request,
+    response: Response,
+    document_id: UUID,
+    source: str,
+    target: str,
+    *,
+    dependencies: bool,
 ) -> Answer:
     state = ready_document(request, response, document_id)
     concepts: NcmStore = request.app.state.ncm_store
-    row = concepts.load(state.job_id, content=False)
-    if row is None or row.status != "ready":
+    row = concepts.load(state.job_id)
+    if row is None or row.status != "ready" or row.payload is None:
         return Answer(status="insufficient_evidence")
     graph: GraphStore = request.app.state.graph_store
-    path, nodes, ambiguous = dependency_path(graph, document_id, source, target, row.id)
+    path, nodes, ambiguous = relationship_path(
+        graph,
+        Snapshot.model_validate(row.payload),
+        source,
+        target,
+        row.id,
+        dependencies=dependencies,
+    )
     if ambiguous:
         return Answer(
             status="clarification_required",
@@ -219,11 +303,15 @@ def explain_dependency(
             citations[chunk.id] = cited_chunk(document_id, original[1], chunk, manifest)
         except ExtractionError:
             return Answer(status="insufficient_evidence")
-        relation = "requires" if edge.predicate == "REQUIRES" else "depends on"
+        relation = edge.predicate.lower().replace("_", " ")
         reasoning.append(f"{nodes[edge.source_id].label} {relation} {nodes[edge.target_id].label}.")
     return Answer(
         status="answered",
-        answer="The document supports this dependency chain.",
+        answer=(
+            "The document supports this dependency chain."
+            if dependencies
+            else "The document supports these connections."
+        ),
         reasoning=reasoning,
         citations=list(citations.values()),
     )

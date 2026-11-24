@@ -242,3 +242,7 @@ The browser now supports document upload, processing status, scoped questions, a
 | 13. Release | Password-gated Docker deployment, secure response headers, health and structured logs, verified snapshot and local restore drill. Independent security signoff and production restore drill remain open. |
 
 See the [client release guide](docs/CLIENT_RELEASE.md) for measured results and operating procedures.
+
+### Phase 8 reasoning increment
+
+Added structured question plans for section constraints, two-concept comparisons, stated-date ordering, and directed or undirected source-backed graph paths. Graph questions now link both canonical concepts and accepted aliases against the active snapshot. Ambiguous aliases, unresolved comparisons and overlapping date intervals produce clarification. Exact electrical conversions reject ambiguous ranges and incompatible units. The integration suite verifies independently cited comparisons, paths and chronology, including incomplete date precision. Supported patterns remain English and deliberately bounded.

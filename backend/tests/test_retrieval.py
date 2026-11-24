@@ -240,3 +240,44 @@ def test_question_can_be_scoped_to_a_named_section(database, migration):
         )
         assert response.status_code == 200, response.text
         assert response.json()["answer"] == "The pump requires a regulator."
+
+
+def test_decomposed_comparison_temporal_order_and_relationship(database, migration):
+    command.upgrade(migration, "head")
+    app = create_app(Settings(database_path=database, ingestion_worker=False))
+    document = model(
+        app,
+        database,
+        "comparison.md",
+        "A pump is a device that moves water.\n\n"
+        "A filter is a device that removes particles.\n\n"
+        "The pump requires a filter.\n\n"
+        "The pump was approved in 2024.\n\n"
+        "The filter was approved on 2023-06-09.\n\n"
+        "The valve was approved on 2024-04-22.",
+    )
+    assert app.state.graph_store.build_next()
+    with TestClient(app, base_url="http://localhost", client=("127.0.0.1", 50000)) as client:
+
+        def ask(prompt):
+            response = client.post(
+                f"{BASE}/ask", json={"question": prompt, "document_id": document}
+            )
+            assert response.status_code == 200, response.text
+            return response.json()
+
+        compared = ask("What is the difference between pump and filter?")
+        assert compared["status"] == "answered"
+        assert compared["reasoning"] == [
+            "A pump is a device that moves water.",
+            "A filter is a device that removes particles.",
+        ]
+        related = ask("How are filter and pump connected?")
+        assert related["reasoning"] == ["pump requires filter."]
+        ordered = ask("Which was approved first: pump or filter?")
+        assert ordered["reasoning"][0] == "The filter was approved on 2023-06-09."
+        overlap = ask("Which was approved first: pump or valve?")
+        assert overlap["status"] == "clarification_required"
+        for result in (compared, related, ordered):
+            for hit in result["citations"]:
+                assert client.get(hit["source_url"]).json()["primary"] == hit["evidence"]
