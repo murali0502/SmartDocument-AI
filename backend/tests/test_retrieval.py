@@ -341,3 +341,25 @@ def test_comparison_keeps_claims_in_their_selected_documents(database, migration
         assert len(compared["claims"]) == 2
         for claim, hit in zip(compared["claims"], compared["citations"], strict=True):
             assert claim["source_chunk_ids"] == [hit["chunk_id"]]
+
+
+def test_label_style_definition_keeps_the_wrapped_source_excerpt(database, migration):
+    command.upgrade(migration, "head")
+    app = create_app(Settings(database_path=database, ingestion_worker=False))
+    document = model(
+        app,
+        database,
+        "label.txt",
+        "CHEMICAL REACTION = A process in which\nnew chemicals are formed.",
+    )
+    with TestClient(app, base_url="http://localhost", client=("127.0.0.1", 50000)) as client:
+        answer = client.post(
+            f"{BASE}/ask",
+            json={"document_id": document, "question": "What is a chemical reaction?"},
+        ).json()
+        assert answer["status"] == "answered"
+        assert (
+            answer["answer"] == "CHEMICAL REACTION = A process in which\nnew chemicals are formed."
+        )
+        citation = answer["citations"][0]
+        assert client.get(citation["source_url"]).json()["primary"] == citation["evidence"]

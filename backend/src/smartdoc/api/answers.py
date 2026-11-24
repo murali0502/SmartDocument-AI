@@ -164,6 +164,9 @@ def direct_answer(
         statements: dict[str, tuple[str, SearchHit]] = {}
         saw_negative = False
         for hit in passages:
+            if predicate == "means?|refers? to|is|are":
+                for definition in labeled_definitions(hit.evidence.text, subject):
+                    statements.setdefault(" ".join(tokens(definition)), (definition, hit))
             for fragment in re.split(r"(?<=[.!?])\s+(?=[A-Z])|\n+", hit.evidence.text):
                 normalized = " ".join(tokens(fragment))
                 if negative_statement.match(normalized):
@@ -204,6 +207,40 @@ def direct_answer(
             )
         break
     return Answer(status="insufficient_evidence", related_passages=passages[:3])
+
+
+def labeled_definitions(text: str, subject: str) -> list[str]:
+    lines = text.split("\n")
+    definitions = []
+    for index, line in enumerate(lines):
+        label, separator, value = (
+            re.split(r"([:=]|[–—]| - )", line, maxsplit=1)
+            if re.search(
+                r"[:=–—]| - ",
+                line,
+            )
+            else ("", "", "")
+        )
+        if not separator or " ".join(tokens(label)) != subject:
+            continue
+        quote = line.strip()
+        if index + 1 < len(lines) and re.search(
+            r"\b(?:which|that|where|and|of|the|a|an|to|in)$",
+            value.strip(),
+            re.IGNORECASE,
+        ):
+            next_line = lines[index + 1]
+            if re.match(r"\s*[a-z]", next_line) and not re.search(r"[:=]", next_line):
+                quote = (line + "\n" + next_line).strip()
+                value += " " + next_line
+        words = tokens(value)
+        if len(words) >= 4 and words[0] not in {"not", "never"}:
+            definitions.append(quote)
+    return definitions
+
+
+def text_between_lines(first: str, second: str) -> str:
+    return (first + "\n" + second).strip()
 
 
 def compare_answers(answers: list[Answer], *, timeline: bool) -> Answer:

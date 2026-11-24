@@ -76,6 +76,8 @@ Phase 5 builds concepts, aliases, hierarchy links and evidence-backed relationsh
 
 Phase 6 publishes a collection graph with source-backed edges and immutable revisions. The [graph API guide](docs/API_DOCUMENTATION.md#knowledge-graph) covers neighborhood, path, evidence and analytics requests.
 
+The hosted build uses Tesseract’s pinned higher-accuracy English weights for scanned pages. PDF scans are rendered at higher resolution within the existing pixel budget, and uncertain text lines can receive a bounded second pass. The improved OCR runs on new ingestion jobs. Identical uploads are deduplicated, so a previously processed scan needs a freshly exported copy to run through the new OCR. Handwriting accuracy still depends on the scan.
+
 ## Ask a question
 
 Select a ready document and ask for a summary, definition, requirement, or dependency. Summaries select representative excerpts across the document and link each excerpt to its source. The first release quotes direct statements, such as “The pump requires a ceramic filter.” Open the citation to see the exact extracted text and its source location. If the question falls outside those patterns, the evidence disagrees, or no direct statement is found, the app reports insufficient evidence and may show related passages.

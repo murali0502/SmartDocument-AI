@@ -24,6 +24,14 @@ FROM python:3.12-slim-bookworm
 RUN apt-get update \
     && apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-eng \
     && rm -rf /var/lib/apt/lists/*
+RUN python -c 'import hashlib, pathlib, urllib.request; \
+    path = pathlib.Path("/opt/smartdoc/tessdata/eng.traineddata"); \
+    path.parent.mkdir(parents=True, exist_ok=True); \
+    url = "https://raw.githubusercontent.com/tesseract-ocr/tessdata_best/e12c65a915945e4c28e237a9b52bc4a8f39a0cec/eng.traineddata"; \
+    data = urllib.request.urlopen(url, timeout=30).read(); \
+    assert hashlib.sha256(data).hexdigest() == "8280aed0782fe27257a68ea10fe7ef324ca0f8d85bd2fd145d1c2b560bcb66ba"; \
+    path.write_bytes(data)'
+ENV TESSDATA_PREFIX=/opt/smartdoc/tessdata
 WORKDIR /app
 COPY --from=backend /build/.venv /build/.venv
 COPY --from=frontend /build/dist /app/frontend
