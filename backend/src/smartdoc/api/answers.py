@@ -39,6 +39,7 @@ router = APIRouter(
 class Question(BaseModel):
     question: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=512)]
     document_id: UUID
+    comparison_document_id: UUID | None = None
 
 
 class Claim(BaseModel):
@@ -82,9 +83,17 @@ PATTERNS = (
 @router.post("/ask")
 def ask(question: Question, request: Request, response: Response) -> Answer:
     response.headers["Cache-Control"] = "no-store"
+    plan = plan_question(question.question)
+    if question.comparison_document_id is not None and plan.intent not in {
+        "comparison",
+        "timeline",
+    }:
+        return Answer(
+            status="clarification_required",
+            answer="Use two documents with a comparison or ordering question.",
+        )
     if SUMMARY_REQUEST.fullmatch(question.question):
         return summarize(request, response, question.document_id)
-    plan = plan_question(question.question)
     retrieval: RetrievalService = request.app.state.retrieval
     if plan.intent in {"dependency", "relationship"}:
         if plan.section:
@@ -106,10 +115,11 @@ def ask(question: Question, request: Request, response: Response) -> Answer:
             else f"What is {concept}?"
             for concept in plan.concepts
         ]
+        documents = (question.document_id, question.comparison_document_id or question.document_id)
         return compare_answers(
             [
-                direct_answer(retrieval, question.document_id, prompt, plan.section)
-                for prompt in prompts
+                direct_answer(retrieval, document, prompt, plan.section)
+                for document, prompt in zip(documents, prompts, strict=True)
             ],
             timeline=plan.intent == "timeline",
         )

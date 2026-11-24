@@ -1738,6 +1738,8 @@ export interface components {
              * Format: uuid
              */
             document_id: string;
+            /** Comparison Document Id */
+            comparison_document_id?: string | null;
         };
         /** Readiness */
         Readiness: {

@@ -55,6 +55,8 @@ function StructuredFields({ data }: { data: Record<string, unknown> }) {
 function DocumentAnalysis({ id }: { id: string }) {
   const [showExtraction, setShowExtraction] = useState(false)
   const [showRevisions, setShowRevisions] = useState(false)
+  const [earlier, setEarlier] = useState("")
+  const [later, setLater] = useState("")
   const data = useResource<Schema["Extraction"]>(showExtraction ? `${api}/documents/${id}/extraction` : "")
   const revisions = useResource<Schema["Page_SnapshotStatus_"]>(showRevisions ? `${api}/documents/${id}/ncm/revisions` : "")
   const units = data.data?.units.filter(unit => unit.data && Object.keys(unit.data).length > 0) ?? []
@@ -77,6 +79,26 @@ function DocumentAnalysis({ id }: { id: string }) {
       <ul>{revisions.data?.items.map(revision => <li key={revision.revision}>
         Revision {revision.revision} · {revision.status} · {revision.concept_count ?? 0} concepts
       </li>)}</ul>
+      {(revisions.data?.items.filter(revision => revision.status === "ready").length ?? 0) > 1 && <>
+        <div className="workspace-form comparison-columns">
+          <div><label htmlFor="earlier-revision">First revision</label>
+            <select id="earlier-revision" value={earlier} onChange={event => setEarlier(event.target.value)}>
+              <option value="">Choose revision</option>
+              {revisions.data?.items.filter(revision => revision.status === "ready").map(revision =>
+                <option key={revision.revision} value={revision.revision ?? ""}>Revision {revision.revision}</option>)}
+            </select>
+          </div>
+          <div><label htmlFor="later-revision">Second revision</label>
+            <select id="later-revision" value={later} onChange={event => setLater(event.target.value)}>
+              <option value="">Choose revision</option>
+              {revisions.data?.items.filter(revision => revision.status === "ready").map(revision =>
+                <option key={revision.revision} value={revision.revision ?? ""}>Revision {revision.revision}</option>)}
+            </select>
+          </div>
+        </div>
+        {earlier && later && earlier !== later &&
+          <Comparison key={`${earlier}:${later}`} left={id} right={id} leftRevision={earlier} rightRevision={later} />}
+      </>}
     </details>
   </>
 }
@@ -154,21 +176,26 @@ function Graph() {
   </div>
 }
 
-function Comparison({ left, right }: { left: string; right: string }) {
+function Comparison({ left, right, leftRevision, rightRevision }: {
+  left: string; right: string; leftRevision?: string; rightRevision?: string
+}) {
   const [after, setAfter] = useState(0)
   const [history, setHistory] = useState<number[]>([])
+  const valid = left && right && (left !== right || (leftRevision && rightRevision && leftRevision !== rightRevision))
+  const historyQuery = leftRevision && rightRevision
+    ? `&left_revision=${leftRevision}&right_revision=${rightRevision}` : ""
   const result = useResource<Schema["Comparison"]>(
-    left && right && left !== right ? `${api}/ncm/compare?left=${left}&right=${right}&after=${after}` : "",
+    valid ? `${api}/ncm/compare?left=${left}&right=${right}&after=${after}${historyQuery}` : "",
   )
   return <section className="workspace-panel">
     <h2>Concept differences</h2><RequestState result={result} />
-    {!left || !right || left === right ? <p>Choose two different documents.</p> : null}
+    {!valid && <p>Choose two different documents.</p>}
     {result.data?.changes.items.length === 0 && <p>No concept differences found.</p>}
     {result.data?.changes.items.map((change, index) => <details className="explore-row" key={index}>
       <summary>{change.left_label ?? change.right_label} · {change.kind.replaceAll("_", " ")}</summary>
       <div className="comparison-columns">
-        <div><h3>First document</h3>{change.left_evidence.map((anchor, i) => <AnchorCard key={i} anchor={anchor} />)}</div>
-        <div><h3>Second document</h3>{change.right_evidence.map((anchor, i) => <AnchorCard key={i} anchor={anchor} />)}</div>
+        <div><h3>{leftRevision ? `Revision ${leftRevision}` : "First document"}</h3>{change.left_evidence.map((anchor, i) => <AnchorCard key={i} anchor={anchor} />)}</div>
+        <div><h3>{rightRevision ? `Revision ${rightRevision}` : "Second document"}</h3>{change.right_evidence.map((anchor, i) => <AnchorCard key={i} anchor={anchor} />)}</div>
       </div>
     </details>)}
     <Pagination cursor={result.data?.changes.next_cursor} after={after} history={history} setAfter={setAfter} setHistory={setHistory} />
@@ -178,8 +205,8 @@ function Comparison({ left, right }: { left: string; right: string }) {
       {result.data.opposing_statements.map((item, index) => <details className="explore-row" key={index}>
         <summary>{item.subject} · {item.relation.toLowerCase().replaceAll("_", " ")} · {item.object}</summary>
         <div className="comparison-columns">
-          <div><h3>First document</h3><AnchorCard anchor={item.left} /></div>
-          <div><h3>Second document</h3><AnchorCard anchor={item.right} /></div>
+          <div><h3>{leftRevision ? `Revision ${leftRevision}` : "First document"}</h3><AnchorCard anchor={item.left} /></div>
+          <div><h3>{rightRevision ? `Revision ${rightRevision}` : "Second document"}</h3><AnchorCard anchor={item.right} /></div>
         </div>
       </details>)}
       {result.data.opposing_truncated && <p className="muted">Showing the first 25 matches.</p>}

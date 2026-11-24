@@ -318,3 +318,26 @@ def test_claim_validation_requires_opt_in_and_abstains_on_conflict(
         assert answer["claims"]
         for claim in answer["claims"]:
             assert claim["text"] in sources[claim["source_chunk_ids"][0]]
+
+
+def test_comparison_keeps_claims_in_their_selected_documents(database, migration):
+    command.upgrade(migration, "head")
+    app = create_app(Settings(database_path=database, ingestion_worker=False))
+    first = model(app, database, "pump.md", "A pump is a device that moves water.")
+    second = model(app, database, "filter.md", "A filter is a device that removes particles.")
+    with TestClient(app, base_url="http://localhost", client=("127.0.0.1", 50000)) as client:
+        response = client.post(
+            f"{BASE}/ask",
+            json={
+                "question": "Compare pump and filter",
+                "document_id": first,
+                "comparison_document_id": second,
+            },
+        )
+        assert response.status_code == 200, response.text
+        compared = response.json()
+        assert compared["status"] == "answered"
+        assert [hit["document_id"] for hit in compared["citations"]] == [first, second]
+        assert len(compared["claims"]) == 2
+        for claim, hit in zip(compared["claims"], compared["citations"], strict=True):
+            assert claim["source_chunk_ids"] == [hit["chunk_id"]]

@@ -250,3 +250,7 @@ Added structured question plans for section constraints, two-concept comparisons
 ### Phase 9 answer and evidence increment
 
 Answer responses now map extractive statements, checked conversions, graph steps, and temporal conclusions to their supporting chunk IDs. Unsupported or conflicting propositions abstain. The opt-in local claim checker uses the pinned NLI model, rejects truncated inputs, and abstains when retrieved evidence contradicts a proposal. The default answer flow stays model-free. The pinned model accepted a supported paraphrase and rejected its negation in an isolated integration run. This verifies the integration on two cases.
+
+### Phase 10 document intelligence increment
+
+Ask can compare two concepts or event dates across explicitly selected documents. Each side is retrieved independently and remains tied to its original source. Document detail can compare two ready historical concept revisions without changing the active revision. Existing structured extracts, comparison of direct opposing statements, cited summaries, and graph gap candidates continue to use live persisted data.
