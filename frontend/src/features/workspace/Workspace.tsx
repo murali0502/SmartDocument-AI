@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import type { FormEvent } from "react"
 
+import { api, json, message } from "../../api"
 import type { components } from "../../generated/api"
 
 type DocumentJob = components["schemas"]["DocumentJob"]
@@ -11,26 +12,11 @@ type Answer = components["schemas"]["Answer"]
 type Hit = components["schemas"]["SearchHit"]
 type Source = components["schemas"]["ChunkSource"]
 
-const api = "/api/v1/workspaces/local"
-
 type Entry = DocumentJob & { structure?: Structure }
-
-async function json<T>(url: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(url, { ...options, cache: "no-store" })
-  if (!response.ok) {
-    const problem = await response.json().catch(() => null)
-    throw new Error(problem?.detail ?? `Request failed (${response.status}).`)
-  }
-  return response.json() as Promise<T>
-}
 
 function state(entry: Entry) {
   return entry.job.status === "failed" || entry.structure?.status === "failed" ? "Failed"
     : entry.structure?.status === "ready" ? "Ready" : "Processing"
-}
-
-function message(error: unknown) {
-  return error instanceof Error ? error.message : "Something went wrong."
 }
 
 function merge(current: Entry[], next: Entry[]) {
@@ -181,7 +167,7 @@ export function Workspace() {
           {!loading && entries.length === 0 && <p className="muted">Your uploads will appear here.</p>}
           <ul className="document-list">
             {entries.map(entry => <li key={entry.document.id}>
-              <strong>{entry.document.filename}</strong>
+              <strong><a href={`/?view=documents&document=${entry.document.id}`}>{entry.document.filename}</a></strong>
               <span data-state={state(entry) === "Ready" ? "ready" : state(entry) === "Failed" ? "issue" : "pending"}>
                 {state(entry)}
               </span>

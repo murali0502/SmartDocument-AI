@@ -74,3 +74,58 @@ test("uploads, answers, opens a citation, and abstains", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 760 })
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 })
+
+test("explores documents, concepts, relationships, and comparisons", async ({ page }) => {
+  execFileSync("uv", ["run", "--frozen", "alembic", "upgrade", "head"], {
+    cwd: backend,
+    env: { ...process.env, SMARTDOC_DATABASE_PATH: database },
+  })
+  const fixtures = [
+    ["pump-manual.txt", "A filter means a mesh screen. The pump requires a filter."],
+    ["motor-manual.txt", "The motor requires a regulator."],
+  ]
+  const ids: string[] = []
+  for (const [filename, text] of fixtures) {
+    const receipt = await page.request.post(`/api/v1/workspaces/local/uploads?filename=${filename}`, {
+      headers: { "Content-Type": "application/octet-stream", "X-SmartDoc-Upload": "1" },
+      data: Buffer.from(text),
+    })
+    expect(receipt.ok()).toBe(true)
+    const { document } = await receipt.json()
+    ids.push(document.id)
+    await expect.poll(async () => {
+      const state = await page.request.get(`/api/v1/workspaces/local/documents/${document.id}/ncm`)
+      return (await state.json()).status
+    }, { timeout: 25000 }).toBe("ready")
+  }
+  await expect.poll(async () => {
+    const state = await page.request.get("/api/v1/workspaces/local/graph")
+    return (await state.json()).latest?.sources.some((source: { document_id: string }) => source.document_id === ids[1])
+  }, { timeout: 25000 }).toBe(true)
+
+  await page.goto(`/?view=documents&document=${ids[0]}`)
+  await expect(page.getByRole("heading", { name: "Document details" })).toBeVisible()
+  await page.locator("details summary").first().click()
+  await expect(page.locator(".passage").first()).toContainText("The pump requires a filter.")
+
+  await page.getByRole("link", { name: "Search", exact: true }).click()
+  await page.getByLabel("Search uploaded documents").fill("mesh screen")
+  await page.getByRole("button", { name: "Search passages" }).click()
+  await page.locator("summary").filter({ hasText: "pump-manual.txt" }).first().click()
+  await expect(page.locator(".evidence-block").first()).toContainText("mesh screen")
+
+  await page.getByRole("link", { name: "Concepts", exact: true }).click()
+  await page.getByLabel("Document", { exact: true }).selectOption(ids[0])
+  await expect(page.locator("summary").filter({ hasText: /^filter/ })).toBeVisible()
+
+  await page.getByRole("link", { name: "Knowledge graph" }).click()
+  await page.getByLabel("Concept name").fill("pump")
+  await page.getByRole("button", { name: "Find concepts" }).click()
+  await page.getByRole("button", { name: "pump", exact: true }).first().click()
+  await expect(page.locator("summary").filter({ hasText: /requires.*filter/ }).first()).toBeVisible()
+
+  await page.getByRole("link", { name: "Compare", exact: true }).click()
+  await page.getByLabel("First document").selectOption(ids[0])
+  await page.getByLabel("Second document").selectOption(ids[1])
+  await expect(page.locator("summary").filter({ hasText: /only (left|right)/ }).first()).toBeVisible()
+})

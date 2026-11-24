@@ -78,6 +78,10 @@ Phase 6 publishes a collection graph with source-backed edges and immutable revi
 
 Select a ready document and ask for a definition, requirement, or dependency. The first release quotes direct statements, such as “The pump requires a ceramic filter.” Open the citation to see the exact extracted text and its source location. If the question falls outside those patterns, the evidence disagrees, or no direct statement is found, the app reports insufficient evidence and may show related passages.
 
+## Explore your documents
+
+Use **Documents** to browse extracted passages and download originals. Use **Search** to find passages across uploads, **Concepts** to inspect definitions and mentions, **Knowledge graph** to browse evidence-backed relationships, or **Compare** to review concept differences between documents.
+
 ## Search the workspace
 
 Use the [retrieval API](docs/RETRIEVAL.md) to find and verify source excerpts with BM25, document structure, concepts and graph relationships. Dense search is available with the optional local embedding model.
