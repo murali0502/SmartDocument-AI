@@ -143,3 +143,55 @@ def test_hosted_snapshot_restores_original_and_cited_answer(migration, database,
         assert (
             client.get(citation["source_url"], auth=auth).json()["primary"] == citation["evidence"]
         )
+
+
+def test_split_frontend_requires_workspace_auth_and_exact_origin(migration, database, tmp_path):
+    command.upgrade(migration, "head")
+    (tmp_path / "index.html").write_text("SmartDoc AI", encoding="utf-8")
+    frontend = "https://smartdoc.example"
+    password = "split-frontend-fixture-password"
+    app = create_hosted_app(
+        Settings(database_path=database, ingestion_worker=False),
+        tmp_path,
+        password,
+        "api.smartdoc.example",
+        frontend_origin=frontend,
+    )
+    route = "/api/v1/workspaces/local/uploads?filename=test.txt"
+    cors = {
+        "Origin": frontend,
+        "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "authorization,content-type,x-smartdoc-upload",
+    }
+    headers = {
+        "Origin": frontend,
+        "Sec-Fetch-Site": "cross-site",
+        "Content-Type": "application/octet-stream",
+        "X-SmartDoc-Upload": "1",
+    }
+    with TestClient(app, base_url="https://api.smartdoc.example") as client:
+        allowed = client.options(route, headers=cors)
+        assert allowed.status_code == 200
+        assert allowed.headers["Access-Control-Allow-Origin"] == frontend
+        denied = client.options(route, headers={**cors, "Origin": "https://outside.example"})
+        assert denied.status_code == 400
+        assert client.post(route, headers=headers, content=b"example").status_code == 401
+        auth = ("smartdoc", password)
+        foreign = client.post(
+            route,
+            auth=auth,
+            content=b"outside",
+            headers={**headers, "Origin": "https://outside.example"},
+        )
+        assert foreign.status_code == 403
+        upload = client.post(route, auth=auth, headers=headers, content=b"allowed")
+        assert upload.status_code == 202, upload.text
+        assert upload.headers["Access-Control-Allow-Origin"] == frontend
+        document = upload.json()["document"]["id"]
+        original = client.get(
+            f"/api/v1/workspaces/local/documents/{document}/original",
+            auth=auth,
+            headers={"Origin": frontend},
+        )
+        assert original.content == b"allowed"
+        assert "Content-Disposition" in original.headers["Access-Control-Expose-Headers"]

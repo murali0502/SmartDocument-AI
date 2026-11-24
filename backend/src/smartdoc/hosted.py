@@ -5,11 +5,13 @@ from base64 import b64encode
 from collections.abc import Awaitable, Callable
 from pathlib import Path
 from secrets import compare_digest
+from urllib.parse import urlsplit
 
 import uvicorn
 from alembic import command
 from alembic.config import Config
 from fastapi import FastAPI, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.staticfiles import StaticFiles
 
@@ -19,10 +21,26 @@ from smartdoc.logging import logging_config
 
 
 def create_hosted_app(
-    settings: Settings, frontend_dir: Path, password: str, public_domain: str | None
+    settings: Settings,
+    frontend_dir: Path,
+    password: str,
+    public_domain: str | None,
+    *,
+    frontend_origin: str | None = None,
 ) -> FastAPI:
     if len(password) < 24 or not password.isascii():
         raise ValueError("SMARTDOC_HOSTED_PASSWORD requires at least 24 ASCII characters.")
+    if frontend_origin:
+        address = urlsplit(frontend_origin)
+        if (
+            address.scheme != "https"
+            or not address.hostname
+            or address.username is not None
+            or address.path
+            or address.query
+            or address.fragment
+        ):
+            raise ValueError("SMARTDOC_FRONTEND_ORIGIN must be an HTTPS origin.")
     credentials = b64encode(f"smartdoc:{password}".encode("ascii"))
     app = create_app(settings, docs_url=None)
 
@@ -62,9 +80,11 @@ def create_hosted_app(
                 if public_domain
                 else f"{request.url.scheme}://{request.url.netloc}"
             )
-            if (origin is not None and origin != expected_origin) or request.headers.get(
-                "sec-fetch-site", "none"
-            ) not in {"same-origin", "none"}:
+            approved_frontend = frontend_origin is not None and origin == frontend_origin
+            if not approved_frontend and (
+                (origin is not None and origin != expected_origin)
+                or request.headers.get("sec-fetch-site", "none") not in {"same-origin", "none"}
+            ):
                 return Response(status_code=403, headers={"Cache-Control": "no-store"})
 
         request.state.hosted_workspace_authenticated = True
@@ -85,6 +105,19 @@ def create_hosted_app(
         )
         return response
 
+    if frontend_origin:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=[frontend_origin],
+            allow_methods=["GET", "POST", "HEAD"],
+            allow_headers=[
+                "Authorization",
+                "Content-Type",
+                "X-SmartDoc-Upload",
+                "X-SmartDoc-Local",
+            ],
+            expose_headers=["Content-Disposition", "X-Request-ID"],
+        )
     return app
 
 
@@ -100,6 +133,7 @@ def main() -> None:
         Path(os.environ["SMARTDOC_FRONTEND_DIR"]),
         os.environ["SMARTDOC_HOSTED_PASSWORD"],
         public_domain,
+        frontend_origin=os.environ.get("SMARTDOC_FRONTEND_ORIGIN"),
     )
     migrations = Config()
     migrations.set_main_option("script_location", str(MIGRATIONS_DIR))

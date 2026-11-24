@@ -1,3 +1,4 @@
+import { ApiFile } from "../../ApiFile"
 import { useEffect, useState } from "react"
 import type { FormEvent } from "react"
 
@@ -227,7 +228,7 @@ export function Workspace() {
             {answer.visual_citations?.length ? <ul className="citation-list">
               {answer.visual_citations.map((citation, index) => <li key={index}>
                 <blockquote className="evidence-block">{citation.excerpt}<footer>Model transcription</footer></blockquote>
-                <a href={citation.image_url} target="_blank" rel="noreferrer">Open original page {citation.page}</a>
+                <ApiFile path={citation.image_url}>Open original page {citation.page}</ApiFile>
               </li>)}
             </ul> : null}
             {answer.reasoning?.length ? <ol className="reasoning-list">{answer.reasoning.map((step, index) =>
@@ -254,7 +255,7 @@ export function Workspace() {
             <h3>Source excerpt</h3>
             <p className="muted">{source.hit.filename} · {location(source.hit)}</p>
             <blockquote>{source.text}</blockquote>
-            <p><a href={`${api}/documents/${source.hit.document_id}/original`} download>Download original</a></p>
+            <p><ApiFile path={`${api}/documents/${source.hit.document_id}/original`} download>Download original</ApiFile></p>
           </section>}
         </section>
       </div>

@@ -1,3 +1,4 @@
+import { ApiFile } from "../../ApiFile"
 import { useState } from "react"
 import type { components } from "../../generated/api"
 import { api, json, message } from "../../api"
@@ -12,7 +13,7 @@ function AnchorCard({ anchor }: { anchor: Anchor }) {
   const location = Object.entries(anchor.locator).map(([key, value]) => `${key.replaceAll("_", " ")} ${value}`).join(" · ")
   return <blockquote className="evidence-block">
     {anchor.text}
-    <footer>{location || `Source unit ${anchor.source.unit}`} · <a href={`${api}/documents/${anchor.document_id}/original`} download>Download original</a></footer>
+    <footer>{location || `Source unit ${anchor.source.unit}`} · <ApiFile path={`${api}/documents/${anchor.document_id}/original`} download>Download original</ApiFile></footer>
   </blockquote>
 }
 
@@ -23,7 +24,7 @@ function DocumentDetail({ id }: { id: string }) {
   const chunks = useResource<Schema["ChunkPage"]>(info.data?.status === "ready" ? `${api}/documents/${id}/chunks?after=${after}` : "")
   return <section className="workspace-panel">
     <h2>Document detail</h2>
-    <p><a href={`${api}/documents/${id}/original`} download>Download original</a></p>
+    <p><ApiFile path={`${api}/documents/${id}/original`} download>Download original</ApiFile></p>
     <RequestState result={info} />
     {info.data && <p>{info.data.status === "ready" ? `${info.data.chunk_count ?? 0} source passages` : `Processing status: ${info.data.status}`}</p>}
     {info.data?.status === "pending" && <button onClick={info.refresh}>Refresh status</button>}

@@ -1,3 +1,4 @@
+import { apiFetch } from "../../api"
 import type { components, paths } from "../../generated/api"
 
 type DatabaseStatus = components["schemas"]["Readiness"]["database"]
@@ -25,7 +26,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 async function probe(path: HealthPath, signal: AbortSignal) {
-  const response = await fetch(path, { signal, cache: "no-store" })
+  const response = await apiFetch(path, { signal })
   const data: unknown = await response.json()
   return { code: response.status, data }
 }
