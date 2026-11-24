@@ -6,9 +6,15 @@ from fastapi import APIRouter, Depends, Request, Response
 from pydantic import BaseModel, Field, StringConstraints
 
 from smartdoc.api.ingestion import require_local
+from smartdoc.api.structure import ready_document
+from smartdoc.ingestion.contracts import Extraction, ExtractionError
+from smartdoc.persistence.ingestion_store import IngestionStore
+from smartdoc.persistence.structure_store import StructureStore
 from smartdoc.retrieval.contracts import SearchHit, SearchQuery
 from smartdoc.retrieval.ranking import STOP, tokens
-from smartdoc.retrieval.service import RetrievalService
+from smartdoc.retrieval.service import MAX_CHUNKS, RetrievalService
+from smartdoc.retrieval.summary import SUMMARY_REQUEST, representative_excerpts
+from smartdoc.structure.contracts import verify_chunk_source
 
 router = APIRouter(
     prefix="/api/v1/workspaces/local",
@@ -25,6 +31,7 @@ class Question(BaseModel):
 class Answer(BaseModel):
     status: Literal["answered", "insufficient_evidence"]
     answer: str | None = None
+    summary: list[str] = Field(default_factory=list)
     citations: list[SearchHit] = Field(default_factory=list)
     related_passages: list[SearchHit] = Field(default_factory=list)
 
@@ -35,12 +42,13 @@ PATTERNS = (
     (r"^(?:what does|what do) (.+?) depend on\??$", r"depends? on"),
     (r"^(?:what is|what are|define) (.+?)\??$", r"means?|refers? to|is|are"),
 )
-SENTENCE_BREAK = re.compile(r"(?<=[.!?])\s+(?=[A-Z])|\n+")
 
 
 @router.post("/ask")
 def ask(question: Question, request: Request, response: Response) -> Answer:
     response.headers["Cache-Control"] = "no-store"
+    if SUMMARY_REQUEST.fullmatch(question.question):
+        return summarize(request, response, question.document_id)
     retrieval: RetrievalService = request.app.state.retrieval
     result = retrieval.search(
         SearchQuery(query=question.question, document_ids=[question.document_id], limit=10)
@@ -62,7 +70,7 @@ def ask(question: Question, request: Request, response: Response) -> Answer:
         statements: dict[str, tuple[str, SearchHit]] = {}
         saw_negative = False
         for hit in result.items:
-            for fragment in SENTENCE_BREAK.split(hit.evidence.text):
+            for fragment in re.split(r"(?<=[.!?])\s+(?=[A-Z])|\n+", hit.evidence.text):
                 normalized = " ".join(tokens(fragment))
                 if negative_statement.match(normalized):
                     saw_negative = True
@@ -73,3 +81,46 @@ def ask(question: Question, request: Request, response: Response) -> Answer:
             return Answer(status="answered", answer=excerpt, citations=[citation])
         break
     return Answer(status="insufficient_evidence", related_passages=result.items[:3])
+
+
+def summarize(request: Request, response: Response, document_id: UUID) -> Answer:
+    state = ready_document(request, response, document_id)
+    structures: StructureStore = request.app.state.structure_store
+    ingestion: IngestionStore = request.app.state.ingestion_store
+    original = ingestion.original(str(document_id))
+    extracted = ingestion.extraction(str(document_id))
+    if original is None or extracted is None or extracted[1] is None:
+        raise ExtractionError("not_found", "The document source was not found.")
+    chunks = structures.chunks(state.job_id, 0, MAX_CHUNKS + 1)
+    if len(chunks) > MAX_CHUNKS:
+        raise ExtractionError("retrieval_limit", "This document is too large to summarize at once.")
+    manifest = Extraction.model_validate(extracted[1])
+    summary: list[str] = []
+    citations: list[SearchHit] = []
+    for chunk, excerpt in representative_excerpts(chunks):
+        try:
+            evidence = verify_chunk_source(manifest, chunk)
+        except ExtractionError:
+            continue
+        if chunk.document_id != document_id:
+            continue
+        summary.append(excerpt)
+        citations.append(
+            SearchHit(
+                document_id=document_id,
+                filename=original[1],
+                chunk_id=chunk.id,
+                locator=chunk.locator,
+                section_path=chunk.section_path,
+                element_type=chunk.element_type,
+                evidence=evidence,
+                source_url=f"/api/v1/workspaces/local/documents/{document_id}/chunks/{chunk.id}/source",
+                score=0,
+                method_scores={},
+            )
+        )
+    if not summary:
+        return Answer(status="insufficient_evidence")
+    return Answer(
+        status="answered", answer="\n".join(summary), summary=summary, citations=citations
+    )

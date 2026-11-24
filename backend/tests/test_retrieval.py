@@ -107,3 +107,42 @@ def test_ask_requires_one_direct_statement_in_selected_document(database, migrat
             else:
                 assert data["status"] == "insufficient_evidence"
                 assert data["citations"] == []
+
+
+def test_pdf_summary_quotes_selected_document_across_pages(database, migration):
+    from io import BytesIO
+    from time import monotonic, sleep
+
+    from reportlab.pdfgen.canvas import Canvas
+    from test_ingestion import post
+
+    command.upgrade(migration, "head")
+    output = BytesIO()
+    passages = [
+        "Electric current measures how quickly electric charge moves through a circuit.",
+        "Electrical resistance limits the flow of charge through a conductor.",
+    ]
+    canvas = Canvas(output)
+    for passage in passages:
+        canvas.drawString(36, 700, passage)
+        canvas.showPage()
+    canvas.save()
+    app = create_app(Settings(database_path=database))
+    with TestClient(app, base_url="http://localhost", client=("127.0.0.1", 50000)) as client:
+        upload = post(client, "electricity.pdf", output.getvalue())
+        assert upload.status_code == 202, upload.text
+        document_id = upload.json()["document"]["id"]
+        deadline = monotonic() + 15
+        while client.get(f"{BASE}/documents/{document_id}/structure").json()["status"] != "ready":
+            assert monotonic() < deadline
+            sleep(0.1)
+        response = client.post(
+            f"{BASE}/ask",
+            json={"document_id": document_id, "question": "Summary of this document"},
+        )
+        assert response.status_code == 200, response.text
+        answer = response.json()
+        assert answer["summary"] == passages
+        assert [hit["locator"]["page"] for hit in answer["citations"]] == [1, 2]
+        for excerpt, hit in zip(passages, answer["citations"], strict=True):
+            assert excerpt in client.get(hit["source_url"]).json()["primary"]["text"]

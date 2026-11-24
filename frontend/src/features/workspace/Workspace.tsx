@@ -113,9 +113,12 @@ export function Workspace() {
     }
   }
 
+  const ready = entries.filter(entry => state(entry) === "Ready")
+  const activeDocument = selected || (ready.length === 1 ? ready[0].document.id : "")
+
   async function ask(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!selected || !question.trim()) return
+    if (!activeDocument || !question.trim()) return
     setAsking(true)
     setAnswer(null)
     setSource(null)
@@ -124,7 +127,7 @@ export function Workspace() {
       setAnswer(await json<Answer>(`${api}/ask`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question, document_id: selected }),
+        body: JSON.stringify({ question, document_id: activeDocument }),
       }))
     } catch (error) {
       setAnswerError(message(error))
@@ -146,7 +149,6 @@ export function Workspace() {
     }
   }
 
-  const ready = entries.filter(entry => state(entry) === "Ready")
   const hits = (answer?.status === "answered" ? answer.citations : answer?.related_passages) ?? []
 
   return (
@@ -181,7 +183,7 @@ export function Workspace() {
           <h2 id="question-title">Ask a question</h2>
           <form className="workspace-form" onSubmit={ask}>
             <label htmlFor="scope">Document</label>
-            <select id="scope" value={selected} required disabled={asking || sourceBusy}
+            <select id="scope" value={activeDocument} required disabled={asking || sourceBusy}
               onChange={event => { setSelected(event.target.value); setAnswer(null); setSource(null) }}>
               <option value="">Choose a ready document</option>
               {ready.map(entry => <option key={entry.document.id} value={entry.document.id}>
@@ -192,13 +194,15 @@ export function Workspace() {
             <textarea id="question" rows={3} maxLength={512} required disabled={asking || sourceBusy}
               placeholder="What does the pump require?" value={question}
               onChange={event => setQuestion(event.target.value)} />
-            <small className="muted">Ask for a definition, requirement, or dependency.</small>
-            <button disabled={asking || sourceBusy || !selected || !question.trim()}>{asking ? "Searching…" : "Ask SmartDoc"}</button>
+            <small className="muted">Ask for a summary, definition, requirement, or dependency.</small>
+            <button disabled={asking || sourceBusy || !activeDocument || !question.trim()}>{asking ? "Searching…" : "Ask SmartDoc"}</button>
           </form>
           {answerError && <p role="alert">{answerError}</p>}
           {answer && <section className="answer-result" aria-live="polite">
-            <h3>{answer.status === "answered" ? "Answer" : "Insufficient evidence"}</h3>
-            <p>{answer.answer ?? "SmartDoc couldn’t verify a direct answer in this document."}</p>
+            <h3>{answer.summary?.length ? "Document summary" : answer.status === "answered" ? "Answer" : "Insufficient evidence"}</h3>
+            {answer.summary?.length
+              ? <ul>{answer.summary.map((excerpt, index) => <li key={index}>{excerpt}</li>)}</ul>
+              : <p>{answer.answer ?? "SmartDoc couldn’t verify a direct answer in this document."}</p>}
             {hits.length > 0 && <ul className="citation-list">{hits.map(hit => <li key={hit.chunk_id}>
               {answer.status !== "answered" && <p className="muted">{hit.evidence.text.slice(0, 240)}{hit.evidence.text.length > 240 && "…"}</p>}
               <button type="button" disabled={asking || sourceBusy} onClick={() => void openSource(hit)}>

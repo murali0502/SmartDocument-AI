@@ -792,6 +792,8 @@ export interface components {
             status: "answered" | "insufficient_evidence";
             /** Answer */
             answer?: string | null;
+            /** Summary */
+            summary?: string[];
             /** Citations */
             citations?: components["schemas"]["SearchHit"][];
             /** Related Passages */

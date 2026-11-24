@@ -76,7 +76,7 @@ Phase 6 publishes a collection graph with source-backed edges and immutable revi
 
 ## Ask a question
 
-Select a ready document and ask for a definition, requirement, or dependency. The first release quotes direct statements, such as “The pump requires a ceramic filter.” Open the citation to see the exact extracted text and its source location. If the question falls outside those patterns, the evidence disagrees, or no direct statement is found, the app reports insufficient evidence and may show related passages.
+Select a ready document and ask for a summary, definition, requirement, or dependency. Summaries select representative excerpts across the document and link each excerpt to its source. The first release quotes direct statements, such as “The pump requires a ceramic filter.” Open the citation to see the exact extracted text and its source location. If the question falls outside those patterns, the evidence disagrees, or no direct statement is found, the app reports insufficient evidence and may show related passages.
 
 ## Explore your documents
 

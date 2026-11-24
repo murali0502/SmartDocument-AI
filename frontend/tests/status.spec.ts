@@ -54,11 +54,15 @@ test("uploads, answers, opens a citation, and abstains", async ({ page }) => {
   await page.getByLabel("Choose a document").setInputFiles({
     name: "maintenance.txt",
     mimeType: "text/plain",
-    buffer: Buffer.from("The pump requires a ceramic filter.\n"),
+    buffer: Buffer.from("The pump requires a ceramic filter.\n\nThe filter removes small particles from the water supply.\n"),
   })
   await page.getByRole("button", { name: "Upload document" }).click()
   await expect(page.locator(".document-list")).toContainText("Ready", { timeout: 30000 })
-  await page.getByLabel("Document", { exact: true }).selectOption({ label: "maintenance.txt" })
+  await expect(page.getByLabel("Document", { exact: true })).not.toHaveValue("")
+  await page.getByRole("textbox", { name: "Question" }).fill("Summary of this document")
+  await page.getByRole("button", { name: "Ask SmartDoc" }).click()
+  await expect(page.getByRole("heading", { name: "Document summary" })).toBeVisible()
+  await expect(page.locator(".answer-result")).toContainText("The filter removes small particles")
   await page.getByRole("textbox", { name: "Question" }).fill("What does the pump require?")
   await page.getByRole("button", { name: "Ask SmartDoc" }).click()
   await expect(page.locator(".answer-result")).toContainText("The pump requires a ceramic filter.")
