@@ -270,3 +270,7 @@ The full backend suite passed 81 tests with the pinned spaCy, embedding, and NLI
 | NCM with 7 labeled documents | Rules achieved 0.923 concept F1 and 0.941 relation F1 with 77 verified anchors. The optional spaCy profile achieved 0.955 concept F1 and 0.875 relation F1 with 119 verified anchors. |
 
 The retrieval benchmark verifies every returned excerpt against its source endpoint. These synthetic fixtures exercise the workflows and quantify trade-offs. Independent validation on a representative client corpus remains an acceptance activity.
+
+### Phase 13 release increment
+
+Added an automated hosted recovery drill to the backend suite. It uploads a fixture through HTTP Basic authentication, snapshots the active database and hash-verified originals, restores into a separate directory, and verifies readiness, authentication, original bytes and cited answers. Added the release verification steps to the client guide. A rehearsal with an approved production snapshot on a separate Railway service remains an infrastructure acceptance task.

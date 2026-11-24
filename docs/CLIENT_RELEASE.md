@@ -28,3 +28,12 @@ Start a separate service against the restored SQLite file and uploads directory.
 On the frozen synthetic fixture (six documents, eight questions, 17 chunks), the keyword baseline achieved 87.5% recall@5 and 0.750 MRR@5. Model-free reranked search achieved 100% recall@5 and 0.729 MRR@5. The measured service-side median was 5.04 ms for reranked search, with peak benchmark-process memory of 97.8 MiB. The fixture is an engineering check. It does not establish accuracy or capacity on the client’s corpus.
 
 Run the benchmark from the repository root with `uv run --project backend --frozen python scripts/eval_retrieval.py`. Review broad multilingual accuracy, optional model-assisted answer validation, large-corpus performance, and formal independent security assessment separately from this release.
+
+## Verify a release
+
+1. Confirm the deployment source commit in Railway and check the public readiness endpoint.
+2. Confirm signed-out requests receive an authentication challenge. Sign in and use a non-sensitive fixture to verify upload, a cited answer, and original download.
+3. Review Railway request logs for unexpected errors and check that the production volume is mounted. Correlate failures with the response request ID.
+4. Run the automated hosted restore test. For an operations rehearsal, restore an approved snapshot into an isolated Railway service and compare document and citation results before considering a cutover.
+
+The automated restore test snapshots an active hosted fixture, starts a separate application on the restored copy, and checks access control, original bytes, and citation fidelity. It uses temporary storage and no production documents.
