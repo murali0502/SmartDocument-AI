@@ -1,0 +1,20 @@
+{
+  "documents": {
+    "thermal.md": "# Thermal interlock\n\nThe pump requires a ceramic filter.\n\nA thermal interlock means a switch that stops the motor when the housing overheats.",
+    "water.md": "# Water circuit\n\nThe filter depends on a bypass valve.\n\nA filter means a mesh screen.",
+    "pressure.md": "# Pressure calibration\n\nDifferential pressure (DP) means the difference between upstream and downstream pressure.\n\nZero the transmitter at 0 kPa.",
+    "electrical.md": "# Electrical isolation\n\nThe motor requires a regulator.\n\nDisconnect the battery before servicing terminals.",
+    "warehouse.md": "# Inventory\n\nCeramic pump parts are stocked in aisle eight.\n\nThe pressure washer has a damaged battery housing.",
+    "inspection.md": "# Bypass valve inspection\n\nRecord seal wear and replace distorted gaskets."
+  },
+  "queries": [
+    {"query": "What is a thermal interlock?", "passages": ["a switch that stops the motor"]},
+    {"query": "DP", "passages": ["difference between upstream and downstream pressure"]},
+    {"query": "Which pressure should the transmitter read after zeroing?", "passages": ["Zero the transmitter at 0 kPa."]},
+    {"query": "pump ceramic requirement", "passages": ["The pump requires a ceramic filter."]},
+    {"query": "What does the pump and its filter require?", "passages": ["The pump requires a ceramic filter.", "The filter depends on a bypass valve."]},
+    {"query": "Bypass valve inspection procedure", "passages": ["Record seal wear and replace distorted gaskets."]},
+    {"query": "What should be disconnected before work on electrical terminals?", "passages": ["Disconnect the battery before servicing terminals."]},
+    {"query": "Where are ceramic pump spares stored?", "passages": ["Ceramic pump parts are stocked in aisle eight."]}
+  ]
+}

@@ -617,6 +617,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/local/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Search */
+        post: operations["search_api_v1_workspaces_local_search_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/local/ask": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ask */
+        post: operations["ask_api_v1_workspaces_local_ask_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -731,6 +765,20 @@ export interface components {
             items: components["schemas"]["Annotation"][];
             /** Next Cursor */
             next_cursor: number | null;
+        };
+        /** Answer */
+        Answer: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "answered" | "insufficient_evidence";
+            /** Answer */
+            answer?: string | null;
+            /** Citations */
+            citations?: components["schemas"]["SearchHit"][];
+            /** Related Passages */
+            related_passages?: components["schemas"]["SearchHit"][];
         };
         /** Assertion */
         Assertion: {
@@ -1568,6 +1616,16 @@ export interface components {
             /** Method */
             method: string;
         };
+        /** Question */
+        Question: {
+            /** Question */
+            question: string;
+            /**
+             * Document Id
+             * Format: uuid
+             */
+            document_id: string;
+        };
         /** Readiness */
         Readiness: {
             /**
@@ -1659,6 +1717,103 @@ export interface components {
             /** Label */
             label: string;
             span: components["schemas"]["TextSpan"];
+        };
+        /** SearchDiagnostics */
+        SearchDiagnostics: {
+            /** Query Terms */
+            query_terms: string[];
+            /** Methods */
+            methods: ("bm25" | "structure" | "concept" | "graph" | "dense")[];
+            /** Candidate Counts */
+            candidate_counts: {
+                [key: string]: number;
+            };
+            /** Corpus Chunks */
+            corpus_chunks: number;
+            /** Ranked Candidates */
+            ranked_candidates: number;
+            /** Invalid Sources */
+            invalid_sources: number;
+            /** Duration Ms */
+            duration_ms: number;
+            /** Graph Version */
+            graph_version: string | null;
+            /**
+             * Dense Truncated
+             * @default 0
+             */
+            dense_truncated: number;
+        };
+        /** SearchHit */
+        SearchHit: {
+            /**
+             * Document Id
+             * Format: uuid
+             */
+            document_id: string;
+            /** Filename */
+            filename: string;
+            /**
+             * Chunk Id
+             * Format: uuid
+             */
+            chunk_id: string;
+            /** Locator */
+            locator: {
+                [key: string]: number | string;
+            };
+            /** Section Path */
+            section_path: components["schemas"]["SectionRef"][];
+            /**
+             * Element Type
+             * @enum {string}
+             */
+            element_type: "document" | "page" | "slide" | "sheet" | "section" | "heading" | "paragraph" | "sentence" | "table" | "table_row" | "table_cell" | "list" | "list_item" | "figure" | "caption" | "footnote" | "reference" | "code_block" | "math_expression";
+            evidence: components["schemas"]["Evidence"];
+            /** Source Url */
+            source_url: string;
+            /** Score */
+            score: number;
+            /** Method Scores */
+            method_scores: {
+                [key: string]: number;
+            };
+        };
+        /** SearchQuery */
+        SearchQuery: {
+            /** Query */
+            query: string;
+            /** Methods */
+            methods?: ("bm25" | "structure" | "concept" | "graph" | "dense")[];
+            /** Weights */
+            weights?: {
+                [key: string]: number;
+            };
+            /** Document Ids */
+            document_ids?: string[];
+            /** Element Types */
+            element_types?: ("document" | "page" | "slide" | "sheet" | "section" | "heading" | "paragraph" | "sentence" | "table" | "table_row" | "table_cell" | "list" | "list_item" | "figure" | "caption" | "footnote" | "reference" | "code_block" | "math_expression")[];
+            /**
+             * Limit
+             * @default 10
+             */
+            limit: number;
+            /**
+             * Rerank
+             * @default true
+             */
+            rerank: boolean;
+            /**
+             * Diversity
+             * @default 0
+             */
+            diversity: number;
+        };
+        /** SearchResponse */
+        SearchResponse: {
+            /** Items */
+            items: components["schemas"]["SearchHit"][];
+            diagnostics: components["schemas"]["SearchDiagnostics"];
         };
         /** SectionRef */
         SectionRef: {
@@ -3080,6 +3235,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Analytics"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_api_v1_workspaces_local_search_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SearchQuery"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ask_api_v1_workspaces_local_ask_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Question"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Answer"];
                 };
             };
             /** @description Validation Error */

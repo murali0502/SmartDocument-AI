@@ -44,13 +44,13 @@ npm ci
 npm run dev
 ```
 
-Open http://127.0.0.1:5173. The status screen checks the API and SQLite schema on load and when you select **Refresh checks**. The link in the header opens the generated API contract.
+Open http://127.0.0.1:5173 to upload a document and ask a question after it is ready. Open **System status** for API and SQLite checks, or **API workspace** for the API contract.
 
 The backend listens on `127.0.0.1:8000` by default. The frontend forwards same-origin API requests to that backend.
 
 ## Hosted deployment
 
-The root `Dockerfile` packages the browser and API together. Deploy one instance behind HTTPS and mount a persistent volume at `/data`. Set `SMARTDOC_HOSTED_PASSWORD` to a randomly generated password of at least 24 ASCII characters. Sign in as `smartdoc` and select **API workspace** to upload documents and explore results. Railway can use `/api/v1/health/ready` as its health check. The container applies database migrations on startup.
+The root `Dockerfile` packages the browser and API together. Deploy one instance behind HTTPS and mount a persistent volume at `/data`. Set `SMARTDOC_HOSTED_PASSWORD` to a randomly generated password of at least 24 ASCII characters. Sign in as `smartdoc` to upload documents and use **Ask SmartDoc**. Railway can use `/api/v1/health/ready` as its health check. The container applies database migrations on startup.
 
 The hosted app uses a single shared workspace. Anyone with the password can access its documents and results. The volume stores the SQLite database and original uploads. Keep the same volume across deployments and back it up separately.
 
@@ -73,6 +73,14 @@ Phase 5 builds concepts, aliases, hierarchy links and evidence-backed relationsh
 ## Explore the knowledge graph
 
 Phase 6 publishes a collection graph with source-backed edges and immutable revisions. The [graph API guide](docs/API_DOCUMENTATION.md#knowledge-graph) covers neighborhood, path, evidence and analytics requests.
+
+## Ask a question
+
+Select a ready document and ask for a definition, requirement, or dependency. The first release quotes direct statements, such as “The pump requires a ceramic filter.” Open the citation to see the exact extracted text and its source location. If the question falls outside those patterns, the evidence disagrees, or no direct statement is found, the app reports insufficient evidence and may show related passages.
+
+## Search the workspace
+
+Use the [retrieval API](docs/RETRIEVAL.md) to find and verify source excerpts with BM25, document structure, concepts and graph relationships. Dense search is available with the optional local embedding model.
 
 ## Develop and verify
 

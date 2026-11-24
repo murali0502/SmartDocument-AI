@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from smartdoc.api.ingestion import require_local
 from smartdoc.ingestion.contracts import ExtractionError
 from smartdoc.persistence.structure_store import State, StructureStore
-from smartdoc.structure.contracts import Chunk, Element, Evidence, Locator, resolve_span
+from smartdoc.structure.contracts import Chunk, Element, Evidence, Locator, verify_chunk_source
 
 router = APIRouter(
     prefix="/api/v1/workspaces/local/documents/{document_id}",
@@ -123,14 +123,9 @@ def chunk_source(
     if result is None:
         raise ExtractionError("not_found", "The chunk was not found.")
     chunk, manifest = result
-    primary = resolve_span(manifest, chunk.primary)
-    if primary != chunk.text or any(
-        resolve_span(manifest, overlap.source) != overlap.text for overlap in chunk.overlap
-    ):
-        raise ExtractionError("invalid_provenance", "The chunk does not match its recorded source.")
     return ChunkSource(
         chunk_id=chunk.id,
         locator=chunk.locator,
-        primary=Evidence(source=chunk.primary, text=primary),
+        primary=verify_chunk_source(manifest, chunk),
         overlap=chunk.overlap,
     )

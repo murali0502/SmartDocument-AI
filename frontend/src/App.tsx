@@ -1,6 +1,8 @@
 import { SystemStatus } from "./features/status/SystemStatus"
+import { Workspace } from "./features/workspace/Workspace"
 
 export function App() {
+  const showStatus = new URLSearchParams(window.location.search).has("status")
   return (
     <>
       <header className="masthead">
@@ -14,11 +16,14 @@ export function App() {
               <span>Next Concept Modelling</span>
             </div>
           </div>
-          <a className="text-link" href="/api/v1/docs">API workspace</a>
+          <nav className="workspace-nav" aria-label="Workspace">
+            <a className="text-link" href={showStatus ? "/" : "/?status"}>{showStatus ? "Documents" : "System status"}</a>
+            <a className="text-link" href="/api/v1/docs">API workspace</a>
+          </nav>
         </div>
       </header>
       <main className="layout main">
-        <SystemStatus />
+        {showStatus ? <SystemStatus /> : <Workspace />}
       </main>
     </>
   )

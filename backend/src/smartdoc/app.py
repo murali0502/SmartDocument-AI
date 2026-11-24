@@ -11,6 +11,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException
 
+from smartdoc.api.answers import router as answers_router
 from smartdoc.api.errors import http_error, problem, validation_error
 from smartdoc.api.graph import router as graph_router
 from smartdoc.api.health import router
@@ -18,6 +19,7 @@ from smartdoc.api.ingestion import ingestion_error
 from smartdoc.api.ingestion import router as ingestion_router
 from smartdoc.api.ncm import router as ncm_router
 from smartdoc.api.nlp import router as nlp_router
+from smartdoc.api.retrieval import router as retrieval_router
 from smartdoc.api.structure import router as structure_router
 from smartdoc.config import MIGRATIONS_DIR, Settings
 from smartdoc.ingestion.contracts import ExtractionError
@@ -31,6 +33,7 @@ from smartdoc.persistence.ncm_store import NcmStore
 from smartdoc.persistence.nlp_store import NlpStore
 from smartdoc.persistence.readiness import DatabaseReadiness
 from smartdoc.persistence.structure_store import StructureStore
+from smartdoc.retrieval.service import RetrievalService
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +98,9 @@ def create_app(
     app.state.ncm_store = concepts
     app.state.graph_store = graph
     app.state.local_inference = LocalInference(models)
+    app.state.retrieval = RetrievalService(
+        engine, pipeline.key, concepts.key, graph.scope, app.state.local_inference
+    )
     app.state.settings = settings
     app.add_exception_handler(ExtractionError, ingestion_error)
     app.add_exception_handler(HTTPException, http_error)
@@ -105,6 +111,8 @@ def create_app(
     app.include_router(nlp_router)
     app.include_router(ncm_router)
     app.include_router(graph_router)
+    app.include_router(retrieval_router)
+    app.include_router(answers_router)
 
     @app.middleware("http")
     async def correlate_request(

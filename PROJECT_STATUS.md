@@ -1,6 +1,6 @@
 # SmartDoc AI project status
 
-Updated 23 November 2026. The Phase 0 architecture is approved. Phases 1 through 6 are implemented and verified on Linux. Phase 7 is pending.
+Updated 24 November 2026. The Phase 0 architecture is approved. Phases 1 through 7 are implemented and verified on Linux. Phase 8 is pending.
 
 ## Phase 1 implementation report
 
@@ -204,3 +204,27 @@ Graph records stay within the local workspace and active configuration. Tests co
 ### Incomplete and upcoming
 
 The browser graph view, global identity merges, production audit and retention policies, large-graph evaluation, and Windows execution remain unverified or planned. Phase 7 should add sparse, dense, concept, structure and graph retrieval, then evaluate ranking and filtering against annotated queries.
+
+## Phase 7 implementation report
+
+- Added workspace search with BM25, structural, NCM concept, graph and opt-in CPU dense retrieval. The API supports filtered search, weighted reciprocal rank fusion, lexical reranking and optional maximum marginal relevance. The existing source endpoint and retrieval use the same provenance validator.
+- Added the retrieval service and route, generated OpenAPI types, integration tests, an annotated benchmark with eight queries, and the [retrieval guide](docs/RETRIEVAL.md). The default runtime added no dependencies or migrations. Dense search reuses the pinned MiniLM embedding model.
+- Ran backend lint, format and pytest, OpenAPI export, TypeScript/Vite build, Chromium Playwright, and the retrieval benchmark with and without the model. The benchmark used the normal upload and search endpoints and independently checked every returned excerpt against its source.
+- The search endpoint uses existing local or hosted authorization, enforces workspace and document filters before ranking, omits invalid excerpts, and returns non-cacheable responses.
+
+| Corpus | Variant | Recall@5 | MRR@5 | Server p50 |
+|---|---|---:|---:|---:|
+| 17 chunks | BM25 | 0.875 | 0.750 | 2.10 ms |
+| 17 chunks | Default model-free search | 1.000 | 0.729 | 5.14 ms |
+| 17 chunks | MiniLM dense only | 1.000 | 0.854 | 47.73 ms |
+| 65 chunks | BM25 | 0.875 | 0.688 | 3.54 ms |
+| 65 chunks | Default model-free search | 1.000 | 0.692 | 7.61 ms |
+| 65 chunks | MiniLM dense only | 1.000 | 0.854 | 132.82 ms |
+
+On both corpora the structural signal increased recall from 0.875 to 1.000 in the unreranked ablation. Concept and graph signals did not add recall and reduced MRR in that ablation. The default model-free benchmark process peaked at 98.7 MiB. The optional-model runs peaked at 211.0 MiB and 215.9 MiB. These are small synthetic Linux benchmarks, and the process timings include retrieval and provenance verification.
+
+Search computes rankings on demand within explicit corpus limits. Persistent indexing, cross-encoder evaluation, independent corpus-scale evaluation, and the browser search experience remain open. Phase 8 should consume the verified candidate contract and test intent, ambiguity, evidence selection, and bounded reasoning.
+
+## Client release
+
+The browser now supports document upload, processing status, scoped questions, and citation inspection. The answer API quotes matching source statements for definitions, requirements, and dependencies. It abstains when a supported, unambiguous statement is unavailable among the retrieved passages. The hosted release retains the existing password gate and persistent SQLite workspace. Broader question interpretation and reasoning remain scoped to the Phase 8 roadmap.

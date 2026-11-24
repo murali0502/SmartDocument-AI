@@ -111,3 +111,12 @@ def resolve_span(extraction: Extraction, span: SourceSpan) -> str:
     if not 0 <= span.start < span.end <= len(text):
         raise ExtractionError("invalid_provenance", "The recorded source range is invalid.")
     return text[span.start : span.end]
+
+
+def verify_chunk_source(extraction: Extraction, chunk: Chunk) -> Evidence:
+    primary = resolve_span(extraction, chunk.primary)
+    if primary != chunk.text or any(
+        resolve_span(extraction, overlap.source) != overlap.text for overlap in chunk.overlap
+    ):
+        raise ExtractionError("invalid_provenance", "The chunk does not match its recorded source.")
+    return Evidence(source=chunk.primary, text=primary)
