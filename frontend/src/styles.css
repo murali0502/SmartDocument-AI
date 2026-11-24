@@ -180,3 +180,10 @@ thead th { color: var(--muted); background: var(--soft); }
 .reasoning-list { padding-inline-start: 1.4rem; }
 .insight-section { margin-top: 1rem; }
 caption { text-align: start; color: var(--muted); padding-block: .55rem; font-size: .8rem; }
+.question-options { padding: .65rem .75rem; border: 1px solid var(--border); border-radius: .65rem; }
+.question-options summary { cursor: pointer; color: var(--accent); font-weight: 620; font-size: .86rem; }
+.question-options label, .question-options small { display: block; margin-top: .55rem; }
+.question-options select { margin-top: .35rem; }
+.claim-list { padding-inline-start: 1.35rem; }
+.claim-list p { margin: .3rem 0; }
+.claim-list button { margin: .2rem .35rem .35rem 0; text-align: start; max-width: 100%; }

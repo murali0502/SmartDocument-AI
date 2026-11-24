@@ -254,3 +254,7 @@ Answer responses now map extractive statements, checked conversions, graph steps
 ### Phase 10 document intelligence increment
 
 Ask can compare two concepts or event dates across explicitly selected documents. Each side is retrieved independently and remains tied to its original source. Document detail can compare two ready historical concept revisions without changing the active revision. Existing structured extracts, comparison of direct opposing statements, cited summaries, and graph gap candidates continue to use live persisted data.
+
+### Phase 11 browser integration increment
+
+Ask SmartDoc now exposes a second document selector and per-claim source inspection. The Chromium workflow compares two real uploaded documents, expands the evidence mapping and opens the second document’s cited passage. Existing browser checks cover the PDF, table extraction, search, graph navigation, evaluation, and appearance settings.

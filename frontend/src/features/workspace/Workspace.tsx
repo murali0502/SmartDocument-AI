@@ -40,6 +40,7 @@ export function Workspace() {
   const [entries, setEntries] = useState<Entry[]>([])
   const [cursor, setCursor] = useState<string | null>(null)
   const [selected, setSelected] = useState("")
+  const [comparison, setComparison] = useState("")
   const [question, setQuestion] = useState("")
   const [answer, setAnswer] = useState<Answer | null>(null)
   const [source, setSource] = useState<{ hit: Hit; text: string } | null>(null)
@@ -127,7 +128,10 @@ export function Workspace() {
       setAnswer(await json<Answer>(`${api}/ask`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question, document_id: activeDocument }),
+        body: JSON.stringify({
+          question, document_id: activeDocument,
+          comparison_document_id: comparison && comparison !== activeDocument ? comparison : undefined,
+        }),
       }))
     } catch (error) {
       setAnswerError(message(error))
@@ -190,12 +194,23 @@ export function Workspace() {
           <form className="workspace-form" onSubmit={ask}>
             <label htmlFor="scope">Document</label>
             <select id="scope" value={activeDocument} required disabled={asking || sourceBusy}
-              onChange={event => { setSelected(event.target.value); setAnswer(null); setSource(null) }}>
+              onChange={event => { setSelected(event.target.value); setComparison(""); setAnswer(null); setSource(null) }}>
               <option value="">Choose a ready document</option>
               {ready.map(entry => <option key={entry.document.id} value={entry.document.id}>
                 {entry.document.filename}
               </option>)}
             </select>
+            {ready.length > 1 && <details className="question-options">
+              <summary>Compare with another document</summary>
+              <label htmlFor="comparison-document">Second document</label>
+              <select id="comparison-document" value={comparison} disabled={asking || sourceBusy}
+                onChange={event => { setComparison(event.target.value); setAnswer(null); setSource(null) }}>
+                <option value="">Compare within the selected document</option>
+                {ready.filter(entry => entry.document.id !== activeDocument).map(entry =>
+                  <option key={entry.document.id} value={entry.document.id}>{entry.document.filename}</option>)}
+              </select>
+              <small className="muted">Try “Compare pump and filter” or “Which was approved first: pump or filter?”</small>
+            </details>}
             <label htmlFor="question">Question</label>
             <textarea id="question" rows={3} maxLength={512} required disabled={asking || sourceBusy}
               placeholder="What does the pump require?" value={question}
@@ -211,6 +226,17 @@ export function Workspace() {
               : <p>{answer.answer ?? "SmartDoc couldn’t verify a direct answer in this document."}</p>}
             {answer.reasoning?.length ? <ol className="reasoning-list">{answer.reasoning.map((step, index) =>
               <li key={index}>{step}</li>)}</ol> : null}
+            {answer.claims?.length ? <details className="explore-row">
+              <summary>Claim evidence</summary>
+              <ol className="claim-list">{answer.claims.map((claim, index) => <li key={index}>
+                <p>{claim.text}</p>
+                {claim.source_chunk_ids.map(id => {
+                  const hit = hits.find(item => item.chunk_id === id)
+                  return hit && <button type="button" key={id} disabled={asking || sourceBusy}
+                    onClick={() => void openSource(hit)}>Inspect source · {hit.filename} · {location(hit)}</button>
+                })}
+              </li>)}</ol>
+            </details> : null}
             {hits.length > 0 && <ul className="citation-list">{hits.map(hit => <li key={hit.chunk_id}>
               {answer.status !== "answered" && <p className="muted">{hit.evidence.text.slice(0, 240)}{hit.evidence.text.length > 240 && "…"}</p>}
               <button type="button" disabled={asking || sourceBusy} onClick={() => void openSource(hit)}>

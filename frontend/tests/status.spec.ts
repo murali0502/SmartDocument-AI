@@ -105,7 +105,7 @@ test("explores documents, concepts, relationships, and comparisons", async ({ pa
   })
   const fixtures = [
     ["pump-manual.txt", "A filter means a mesh screen. The pump requires a filter."],
-    ["motor-manual.txt", "The motor requires a regulator."],
+    ["motor-manual.txt", "A motor is a device that generates motion. The motor requires a regulator."],
   ]
   const ids: string[] = []
   for (const [filename, text] of fixtures) {
@@ -153,6 +153,16 @@ test("explores documents, concepts, relationships, and comparisons", async ({ pa
   await expect(page.locator("summary").filter({ hasText: /only (left|right)/ }).first()).toBeVisible()
   await page.getByRole("link", { name: "Analytics", exact: true }).click()
   await expect(page.getByRole("heading", { name: "Graph coverage" })).toBeVisible()
+  await page.getByRole("link", { name: "Ask SmartDoc", exact: true }).click()
+  await page.getByLabel("Document", { exact: true }).selectOption(ids[0])
+  await page.locator("summary").filter({ hasText: "Compare with another document" }).click()
+  await page.getByLabel("Second document").selectOption(ids[1])
+  await page.getByRole("textbox", { name: "Question" }).fill("Compare filter and motor")
+  await page.getByRole("button", { name: "Ask SmartDoc" }).click()
+  await expect(page.locator(".answer-result")).toContainText("A motor is a device that generates motion.")
+  await page.locator("summary").filter({ hasText: "Claim evidence" }).click()
+  await page.getByRole("button", { name: /Inspect source.*motor-manual.txt/ }).click()
+  await expect(page.locator(".source-card")).toContainText("motor-manual.txt")
 })
 
 test("shows evaluation results and persists client appearance settings", async ({ page }, info) => {
