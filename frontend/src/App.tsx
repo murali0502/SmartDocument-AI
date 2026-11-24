@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { api, apiOrigin, json, message, setWorkspacePassword } from "./api"
 import { Explore } from "./features/explore/Explore"
 import { Insights } from "./features/insights/Insights"
 import { SystemStatus } from "./features/status/SystemStatus"
@@ -18,7 +19,17 @@ const links = [
 ] as const
 
 export function App() {
-  const params = new URLSearchParams(window.location.search)
+  const [route, setRoute] = useState(() => window.location.search)
+  const [authenticated, setAuthenticated] = useState(!apiOrigin)
+  const [loginError, setLoginError] = useState("")
+  const [signingIn, setSigningIn] = useState(false)
+  const params = new URLSearchParams(route)
+  useEffect(() => {
+    if (!apiOrigin) return
+    const restore = () => setRoute(window.location.search)
+    window.addEventListener("popstate", restore)
+    return () => window.removeEventListener("popstate", restore)
+  }, [])
   const requested = params.has("status") ? "status" : params.get("view")
   const view = links.find(link => link.view === requested)?.view ?? "ask"
   const explore = view === "documents" || view === "concepts" || view === "graph" || view === "compare" || view === "search"
@@ -31,8 +42,48 @@ export function App() {
     localStorage.setItem("smartdoc-motion", motion ? "on" : "off")
   }, [theme, motion])
 
+  if (!authenticated) {
+    return <main className="layout main">
+      <section className="workspace-panel settings-panel">
+        <h1>SmartDoc AI</h1>
+        <form className="workspace-form" onSubmit={async event => {
+          event.preventDefault()
+          const password = new FormData(event.currentTarget).get("password")
+          if (typeof password !== "string" || !password) return
+          setSigningIn(true)
+          setLoginError("")
+          try {
+            setWorkspacePassword(password)
+            await json(`${api}/documents?limit=1`)
+            setAuthenticated(true)
+          } catch (cause) {
+            setWorkspacePassword("")
+            setLoginError(message(cause))
+          } finally {
+            setSigningIn(false)
+          }
+        }}>
+          <label htmlFor="workspace-password">Workspace password</label>
+          <input id="workspace-password" name="password" type="password" autoComplete="current-password" required />
+          <button className="primary-button" disabled={signingIn}>Sign in</button>
+          {loginError && <p role="alert">{loginError}</p>}
+        </form>
+      </section>
+    </main>
+  }
+
   return (
-    <div className="app-shell">
+    <div className="app-shell" onClick={event => {
+      if (!apiOrigin || event.defaultPrevented || event.button !== 0 ||
+        event.ctrlKey || event.metaKey || event.altKey || event.shiftKey ||
+        !(event.target instanceof Element)) return
+      const link = event.target.closest("a")
+      if (!link || link.target || link.origin !== window.location.origin ||
+        link.pathname !== "/" || link.hash) return
+      event.preventDefault()
+      window.history.pushState(null, "", link.href)
+      setRoute(link.search)
+    }}>
       <a className="skip-link" href="#main-content">Skip to content</a>
       <header className="masthead">
         <div className="masthead-inner">
@@ -46,12 +97,13 @@ export function App() {
               <span aria-hidden="true">{link.glyph}</span>{link.name}
             </a>)}
           </nav>
-          <a className="api-link" href="/api/v1/docs">API workspace <span aria-hidden="true">→</span></a>
+          {apiOrigin && <button onClick={() => { setWorkspacePassword(""); setAuthenticated(false) }}>Sign out</button>}
+          <a className="api-link" href={`${apiOrigin}/api/v1/docs`}>API workspace <span aria-hidden="true">→</span></a>
         </div>
       </header>
       <main id="main-content" className="layout main">
         <div className="topline"><span>Workspace</span><span aria-hidden="true">/</span><strong>{links.find(link => link.view === view)?.name}</strong></div>
-        {view === "status" ? <SystemStatus /> : explore ? <Explore page={view} /> :
+        {view === "status" ? <SystemStatus /> : explore ? <Explore key={route} page={view} /> :
           view === "analytics" || view === "evaluation" ? <Insights page={view} /> :
           view === "settings" ? <>
             <div className="page-title"><h1>Settings</h1></div>

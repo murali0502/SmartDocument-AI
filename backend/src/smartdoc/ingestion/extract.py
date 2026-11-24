@@ -1,6 +1,4 @@
 import json
-import os
-import shutil
 import sys
 from pathlib import Path
 
@@ -50,15 +48,16 @@ def apply_limits() -> None:
             ceiling = maximum if hard == resource.RLIM_INFINITY else min(maximum, hard)
             resource.setrlimit(limit, (ceiling, ceiling))
 
-    allowed_program = shutil.which(os.getenv("SMARTDOC_TESSERACT", "tesseract"))
-
     def prevent_io(event: str, args: tuple) -> None:
-        if event.startswith("socket.") or event in {"os.system", "os.exec", "os.posix_spawn"}:
+        if event.startswith("socket.") or event in {
+            "os.system",
+            "os.exec",
+            "os.posix_spawn",
+            "subprocess.Popen",
+        }:
             raise PermissionError(
                 "Network access and shell commands are disabled during extraction."
             )
-        if event == "subprocess.Popen" and args[0] != allowed_program:
-            raise PermissionError("Only the configured OCR engine can be invoked.")
 
     sys.addaudithook(prevent_io)
 

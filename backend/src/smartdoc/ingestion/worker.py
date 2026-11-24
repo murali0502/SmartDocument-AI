@@ -34,8 +34,6 @@ def process_environment() -> dict[str, str]:
         "TMP",
         "LANG",
         "LC_ALL",
-        "TESSDATA_PREFIX",
-        "SMARTDOC_TESSERACT",
     )
     return {
         **{key: os.environ[key] for key in keep if key in os.environ},
@@ -76,9 +74,7 @@ class IngestionWorker:
                 sample.write_bytes(b"SmartDoc parser readiness")
                 output = Path(scratch) / "result.json"
                 env = process_environment()
-                command = self.command(
-                    Claim("", "", sample, "txt"), output, env, sandbox=executable
-                )
+                command = self.command(Claim("", "", sample, "txt"), output, sandbox=executable)
                 probe = subprocess.run(
                     command,
                     env=env,
@@ -99,9 +95,7 @@ class IngestionWorker:
         return None
 
     @staticmethod
-    def command(
-        claim: Claim, output: Path, env: dict[str, str], *, sandbox: str | None
-    ) -> list[str]:
+    def command(claim: Claim, output: Path, *, sandbox: str | None) -> list[str]:
         args = [
             sys.executable,
             "-m",
@@ -129,10 +123,6 @@ class IngestionWorker:
         }
         roots.update(Path(path) for path in (sys.base_prefix, sys.prefix))
         roots.add(Path(__file__).resolve().parents[1])
-        if executable := shutil.which(env.get("SMARTDOC_TESSERACT", "tesseract")):
-            roots.add(Path(executable))
-        if tessdata := env.get("TESSDATA_PREFIX"):
-            roots.add(Path(tessdata).resolve())
         for root in sorted(roots):
             if root.exists():
                 command.extend(("--ro-bind", str(root), str(root)))
@@ -159,7 +149,7 @@ class IngestionWorker:
             env = process_environment()
             try:
                 with subprocess.Popen(
-                    self.command(claim, output, env, sandbox=self.sandbox),
+                    self.command(claim, output, sandbox=self.sandbox),
                     env=env,
                     cwd=directory,
                     start_new_session=os.name == "posix",

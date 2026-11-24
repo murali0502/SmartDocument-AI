@@ -9,6 +9,7 @@ from smartdoc.api.ingestion import require_local
 from smartdoc.api.nlp import LocalHeader, require_model_header
 from smartdoc.api.structure import ready_document
 from smartdoc.ingestion.contracts import Extraction, ExtractionError
+from smartdoc.ingestion.validation import IMAGE_SIGNATURES
 from smartdoc.ncm.contracts import Snapshot
 from smartdoc.nlp.inference import LocalInference
 from smartdoc.persistence.graph_store import GraphStore
@@ -27,6 +28,7 @@ from smartdoc.retrieval.reasoning import (
 )
 from smartdoc.retrieval.service import MAX_CHUNKS, RetrievalService
 from smartdoc.retrieval.summary import SUMMARY_REQUEST, representative_excerpts
+from smartdoc.retrieval.vision import VisionModel, render_pages
 from smartdoc.structure.contracts import Chunk, resolve_span, verify_chunk_source
 
 router = APIRouter(
@@ -48,9 +50,16 @@ class Claim(BaseModel):
     source_chunk_ids: list[UUID] = Field(min_length=1)
 
 
+class VisualCitation(BaseModel):
+    page: int
+    excerpt: str
+    image_url: str
+
+
 class Answer(BaseModel):
     status: Literal["answered", "insufficient_evidence", "clarification_required"]
     answer: str | None = None
+    visual_citations: list[VisualCitation] = Field(default_factory=list)
     claims: list[Claim] = Field(default_factory=list)
     reasoning: list[str] = Field(default_factory=list)
     summary: list[str] = Field(default_factory=list)
@@ -83,6 +92,15 @@ PATTERNS = (
 @router.post("/ask")
 def ask(question: Question, request: Request, response: Response) -> Answer:
     response.headers["Cache-Control"] = "no-store"
+    visual = visual_manifest(request, question.document_id)
+    compared = question.comparison_document_id
+    if compared is not None and (visual is not None or visual_manifest(request, compared)):
+        return Answer(
+            status="clarification_required",
+            answer="Ask about one visual document at a time.",
+        )
+    if visual is not None:
+        return visual_answer(question, request, visual)
     plan = plan_question(question.question)
     if question.comparison_document_id is not None and plan.intent not in {
         "comparison",
@@ -463,4 +481,79 @@ def validate_claim(
         answer=proposal.claim,
         citations=supported,
         claims=[supported_claim(proposal.claim, "nli", *supported)],
+    )
+
+
+def visual_manifest(request: Request, document_id: UUID) -> Extraction | None:
+    storage: IngestionStore = request.app.state.ingestion_store
+    extracted = storage.extraction(str(document_id))
+    if not extracted or extracted[1] is None:
+        return None
+    data = extracted[1]
+    format = data["format"]
+    if (
+        format in IMAGE_SIGNATURES
+        or format == "pdf"
+        and any(
+            unit.get("data", {}).get("vision_scan")
+            or "ocr" in unit.get("data", {})
+            or not unit.get("text", "").strip()
+            for unit in data["units"]
+        )
+    ):
+        return Extraction.model_validate(data)
+    return None
+
+
+def visual_answer(question: Question, request: Request, manifest: Extraction) -> Answer:
+    vision: VisionModel | None = request.app.state.vision
+    if vision is None:
+        raise ExtractionError(
+            "vision_unavailable",
+            "Visual document analysis requires a configured vision-language model.",
+        )
+    storage: IngestionStore = request.app.state.ingestion_store
+    original = storage.original(str(question.document_id))
+    if original is None:
+        raise ExtractionError("not_found", "The original document was not found.")
+    max_pages = request.app.state.settings.vision_max_pages
+    if len(manifest.units) > max_pages:
+        return Answer(
+            status="clarification_required",
+            answer=f"Visual analysis supports up to {max_pages} pages. Choose a smaller document.",
+        )
+    pages = list(range(1, len(manifest.units) + 1))
+    if not pages:
+        return Answer(status="insufficient_evidence")
+    result = vision.ask(original[0], pages, question.question, manifest.format)
+    if not result.answer:
+        return Answer(status="insufficient_evidence")
+    return Answer(
+        status="answered",
+        answer=result.answer,
+        visual_citations=[
+            VisualCitation(
+                page=evidence.page,
+                excerpt=evidence.excerpt,
+                image_url=(
+                    f"/api/v1/workspaces/local/documents/{question.document_id}/"
+                    f"page-images/{evidence.page}"
+                ),
+            )
+            for evidence in result.evidence
+        ],
+    )
+
+
+@router.get("/documents/{document_id}/page-images/{page}", response_class=Response)
+def page_image(document_id: UUID, page: int, request: Request) -> Response:
+    manifest = visual_manifest(request, document_id)
+    storage: IngestionStore = request.app.state.ingestion_store
+    original = storage.original(str(document_id))
+    if original is None or manifest is None:
+        raise ExtractionError("not_found", "The visual document was not found.")
+    return Response(
+        render_pages(original[0], [page], manifest.format)[0],
+        media_type="image/jpeg",
+        headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"},
     )

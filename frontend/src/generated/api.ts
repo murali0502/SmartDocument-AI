@@ -685,6 +685,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/local/documents/{document_id}/page-images/{page}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Page Image */
+        get: operations["page_image_api_v1_workspaces_local_documents__document_id__page_images__page__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/local/evaluation": {
         parameters: {
             query?: never;
@@ -826,6 +843,8 @@ export interface components {
             status: "answered" | "insufficient_evidence" | "clarification_required";
             /** Answer */
             answer?: string | null;
+            /** Visual Citations */
+            visual_citations?: components["schemas"]["VisualCitation"][];
             /** Claims */
             claims?: components["schemas"]["Claim"][];
             /** Reasoning */
@@ -2113,6 +2132,15 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /** VisualCitation */
+        VisualCitation: {
+            /** Page */
+            page: number;
+            /** Excerpt */
+            excerpt: string;
+            /** Image Url */
+            image_url: string;
         };
     };
     responses: never;
@@ -3495,6 +3523,36 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Answer"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    page_image_api_v1_workspaces_local_documents__document_id__page_images__page__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+                page: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

@@ -21,10 +21,6 @@ jobs:
       - name: Install Python and locked dependencies
         working-directory: backend
         run: uv sync --locked
-      - name: Install Tesseract and English language data
-        run: |
-          sudo apt-get update
-          sudo apt-get install --no-install-recommends -y tesseract-ocr tesseract-ocr-eng
       - name: Check backend, migrations, and ingestion
         working-directory: backend
         run: |
