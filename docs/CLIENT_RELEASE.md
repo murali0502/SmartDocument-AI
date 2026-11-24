@@ -60,3 +60,8 @@ The split deployment uses the same Python container and storage layout. Deploy t
 Set `VITE_SMARTDOC_API_ORIGIN` in the Netlify build environment to the backend's HTTPS origin. This origin is public configuration. Workspace credentials are entered by users and held in browser memory until reload or sign-out. The frontend calls the backend directly so vision requests can run beyond Netlify's rewrite timeout. The backend allows authenticated requests from the configured frontend origin and rejects foreign origins for writes.
 
 Restore an approved, hash-verified Railway snapshot into the replacement volume before switching users over. Check login, document listing, original downloads, typed answers, cited scan answers and persistence after restart. Retire Railway only after the replacement and backup both pass verification.
+
+
+### Render backend
+
+The repository's `render.yaml` defines the Docker API, readiness check, and a persistent disk at `/data`. It specifies a billable Starter service and a 1 GB disk. Before applying the Blueprint, check the plan and disk size in the Render dashboard. Set the workspace password as a secret in Render and set `SMARTDOC_FRONTEND_ORIGIN` to the exact Netlify site origin. Configure `SMARTDOC_VISION_URL` and `SMARTDOC_VISION_MODEL` separately once a private model server is available. The web service does not provision a model server.
